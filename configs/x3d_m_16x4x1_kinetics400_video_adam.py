@@ -1,3 +1,5 @@
+_base_ = ["./Adam.py", "./default_runtime.py"]
+
 # model settings
 model = dict(
     type='Recognizer3D',
@@ -87,42 +89,8 @@ data = dict(
         data_prefix=data_root_val,
         pipeline=test_pipeline))
 
-# optimizer
-optimizer = dict(type='AdamW', lr=1e-4, weight_decay=0.05)
-optimizer_config = dict(grad_clip=dict(max_norm=1.0))
-# learning policy
-lr_config = dict(policy='CosineAnnealing',
-                 min_lr_ratio=0.01,
-                 warmup='linear',
-                 warmup_ratio=0.01,
-                 warmup_iters=20,
-                 warmup_by_epoch=True)
-total_epochs = 200
-
 # evaluation
-evaluation = dict(
-    interval=5, metrics=['top_k_accuracy', 'mean_class_accuracy'])
-
-# runtime settings
-checkpoint_config = dict(interval=5)
-log_config = dict(
-    interval=200,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook'),
-    ])
-
-# runtime settings
-dist_params = dict(backend='nccl')
-log_level = 'INFO'
-load_from = None
-resume_from = None
-workflow = [('train', 1)]
-
-# disable opencv multithreading to avoid system being overloaded
-opencv_num_threads = 0
-# set multi-process start method as `fork` to speed up the training
-mp_start_method = 'fork'
+evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'])
 
 # work_dir
 work_dir = './work_dirs/x3d_m_16x6x1_kinetics400_video/'
