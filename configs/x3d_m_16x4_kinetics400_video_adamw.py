@@ -1,4 +1,4 @@
-_base_ = ["./Adam.py", "./default_runtime.py"]
+_base_ = ["./AdamW.py", "./default_runtime.py"]
 
 # model settings
 model = dict(
@@ -93,4 +93,4 @@ data = dict(
 evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'])
 
 # work_dir
-work_dir = './work_dirs/x3d_m_16x6x1_kinetics400_video/'
+work_dir = './work_dirs/x3d_m_16x4_kinetics400_video_adamw/'
