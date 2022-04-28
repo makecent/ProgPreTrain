@@ -58,6 +58,7 @@ data = dict(
         data_prefix=data_root_val,
         pipeline=val_pipeline))
 
+checkpoint_config = dict(interval=1)
 # evaluation
 evaluation = dict(interval=1, metrics=['MAE'], save_best='MAE', rule='less')
 
