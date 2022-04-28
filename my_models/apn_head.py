@@ -93,7 +93,6 @@ class APNHead(nn.Module, metaclass=ABCMeta):
         if self.output_type == 'coral':
             output = torch.sigmoid(output)
             progressions = torch.count_nonzero(output > 0.5, dim=-1)
-            progressions = progressions * 100 / output.shape[2]
         else:
             raise TypeError("other than CORAL Not supported yet")
         return progressions

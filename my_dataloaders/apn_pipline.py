@@ -21,9 +21,7 @@ class ProgLabel:
         clip_center = results['frame_inds'].mean()
         prog_label = round(clip_center / results['total_frames'] * self.num_stages)
         if self.ordinal:
-            prog_label = np.full(self.num_stages, fill_value=0.0, dtype='float32')
-            prog_label[:prog_label] = 1.0
-        else:
-            prog_label = float(prog_label)
-        results['prog_labels'] = prog_label
+            ordinal_label = np.full(self.num_stages, fill_value=0.0, dtype='float32')
+            ordinal_label[:prog_label] = 1.0
+        results['prog_labels'] = ordinal_label if self.ordinal else float(prog_label)
         return results
