@@ -11,7 +11,7 @@ model = dict(
     test_cfg=dict(average_clips='prob'))
 
 checkpoint_config = dict(interval=1)
-evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'])
+evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'], by_epoch=False)
 # lr settings
 optimizer = dict(lr=1e-4)
 data = dict(videos_per_gpu=6)
