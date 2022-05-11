@@ -13,7 +13,7 @@ model = dict(
 checkpoint_config = dict(interval=1)
 evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'], by_epoch=False)
 # lr settings
-optimizer = dict(lr=1e-4)
-data = dict(videos_per_gpu=6)
+optimizer = dict(lr=3e-4)
+data = dict(videos_per_gpu=8)
 # work_dir
 work_dir = './work_dirs/mvit_16x4_kinetics400_video/'
