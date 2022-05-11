@@ -9,6 +9,9 @@ model = dict(
     cls_head=dict(type='MViTHead', num_classes=400, in_channels=768),
     train_cfg=None,
     test_cfg=dict(average_clips='prob'))
+
+checkpoint_config = dict(interval=1)
+evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'])
 # lr settings
 optimizer = dict(lr=1e-4)
 data = dict(videos_per_gpu=6)
