@@ -15,5 +15,6 @@ evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'],
 # lr settings
 optimizer = dict(lr=1e-4)
 data = dict(videos_per_gpu=6)
+gpu_ids = [0, 1]
 # work_dir
 work_dir = './work_dirs/mvit_16x4_kinetics400_video/'
