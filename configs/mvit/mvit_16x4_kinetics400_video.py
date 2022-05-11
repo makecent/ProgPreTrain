@@ -1,4 +1,4 @@
-_base_ = ["../base/schedules/adamw_1e-3_30.py",
+_base_ = ["../base/schedules/adamw_3e-4_30.py",
           "../base/default_runtime.py",
           "../base/datasets/kinetics400/video/kinetics400_16x4x1x224x224_video.py"]
 
@@ -13,7 +13,6 @@ model = dict(
 checkpoint_config = dict(interval=1)
 evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'], by_epoch=False)
 # lr settings
-optimizer = dict(lr=3e-4)
 data = dict(videos_per_gpu=8)
 # work_dir
 work_dir = './work_dirs/mvit_16x4_kinetics400_video/'
