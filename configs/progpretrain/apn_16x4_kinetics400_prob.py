@@ -1,9 +1,9 @@
-_base_ = ["./AdamW.py", "./default_runtime.py"]
+_base_ = ["./Adam.py", "./default_runtime.py"]
 
 # model settings
 model = dict(
     type='Recognizer3D',
-    backbone=dict(type='X3D', gamma_w=1, gamma_b=2.25, gamma_d=2.2),
+    backbone=dict(type='X3D', gamma_w=1, gamma_b=2.25, gamma_d=2.2, frozen_stages=4),
     cls_head=dict(
         type='X3DHead',
         in_channels=432,
@@ -93,4 +93,7 @@ data = dict(
 evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'])
 
 # work_dir
-work_dir = './work_dirs/x3d_m_16x4_kinetics400_video_adamw/'
+work_dir = './work_dirs/apn_16x4_kinetics400_prob/'
+
+load_from = './work_dirs/apn_16x4_kinetics400_video/epoch_13.pth'
+find_unused_parameters = True

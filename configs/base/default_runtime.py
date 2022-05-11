@@ -1,10 +1,12 @@
-# imports
-custom_imports = dict(imports=['my_models', 'my_dataloaders'], allow_failed_imports=False)
+custom_imports = dict(imports=['custom_modules'], allow_failed_imports=False)
 
-# others
 checkpoint_config = dict(interval=5)
-log_config = dict(interval=100, hooks=[dict(type='TensorboardLoggerHook'), dict(type='TextLoggerHook')])
-
+log_config = dict(
+    interval=20,
+    hooks=[
+        dict(type='TextLoggerHook'),
+        dict(type='TensorboardLoggerHook'),
+    ])
 # runtime settings
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
@@ -16,6 +18,3 @@ workflow = [('train', 1)]
 opencv_num_threads = 0
 # set multi-process start method as `fork` to speed up the training
 mp_start_method = 'fork'
-
-
-

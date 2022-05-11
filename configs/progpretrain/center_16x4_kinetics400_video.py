@@ -7,7 +7,9 @@ model = dict(
     cls_head=dict(
         type='APNHead',
         in_channels=432,
-        spatial_type='avg3d'))
+        spatial_type='avg3d'),
+    train_cfg=None,
+    test_cfg=None)
 
 # dataset settings
 dataset_type = 'CustomVideoDataset'
@@ -21,7 +23,7 @@ train_pipeline = [
     dict(type='DecordInit'),
     dict(type='SampleFrames', clip_len=16, frame_interval=4),
     dict(type='DecordDecode'),
-    dict(type='ProgLabel', ordinal=True),
+    dict(type='CenterLabel', ordinal=True),
     dict(type='Resize', scale=(-1, 128)),
     dict(type='RandomResizedCrop'),
     dict(type='Resize', scale=(112, 112), keep_ratio=False),
@@ -35,7 +37,7 @@ val_pipeline = [
     dict(type='DecordInit'),
     dict(type='SampleFrames', clip_len=16, frame_interval=4),
     dict(type='DecordDecode'),
-    dict(type='ProgLabel'),
+    dict(type='CenterLabel'),
     dict(type='Resize', scale=(-1, 128)),
     dict(type='CenterCrop', crop_size=112),
     dict(type='Normalize', **img_norm_cfg),
@@ -56,6 +58,11 @@ data = dict(
         type=dataset_type,
         ann_file=ann_file_val,
         data_prefix=data_root_val,
+        pipeline=val_pipeline),
+    test=dict(
+        type=dataset_type,
+        ann_file=ann_file_val,
+        data_prefix=data_root_val,
         pipeline=val_pipeline))
 
 checkpoint_config = dict(interval=1)
@@ -63,4 +70,4 @@ checkpoint_config = dict(interval=1)
 evaluation = dict(interval=1, metrics=['MAE'], save_best='MAE', rule='less')
 
 # work_dir
-work_dir = './work_dirs/apn_16x4_kinetics400_video/'
+work_dir = './work_dirs/center_16x4_kinetics400_video/'

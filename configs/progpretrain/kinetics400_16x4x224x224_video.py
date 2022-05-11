@@ -1,20 +1,3 @@
-_base_ = ["./Adam.py", "./default_runtime.py"]
-
-# model settings
-model = dict(
-    type='Recognizer3D',
-    backbone=dict(type='X3D', gamma_w=1, gamma_b=2.25, gamma_d=2.2),
-    cls_head=dict(
-        type='X3DHead',
-        in_channels=432,
-        num_classes=400,
-        spatial_type='avg',
-        dropout_ratio=0.5,
-        fc1_bias=False),
-    # model training and testing settings
-    train_cfg=None,
-    test_cfg=dict(average_clips='prob'))
-
 # dataset settings
 dataset_type = 'VideoDataset'
 data_root = 'my_data/kinetics400/videos_train'
@@ -28,9 +11,9 @@ train_pipeline = [
     dict(type='DecordInit'),
     dict(type='SampleFrames', clip_len=16, frame_interval=4, num_clips=1),
     dict(type='DecordDecode'),
-    dict(type='Resize', scale=(-1, 128)),
+    dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomResizedCrop'),
-    dict(type='Resize', scale=(112, 112), keep_ratio=False),
+    dict(type='Resize', scale=(224, 224), keep_ratio=False),
     dict(type='Flip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
@@ -46,8 +29,8 @@ val_pipeline = [
         num_clips=1,
         test_mode=True),
     dict(type='DecordDecode'),
-    dict(type='Resize', scale=(-1, 128)),
-    dict(type='CenterCrop', crop_size=112),
+    dict(type='Resize', scale=(-1, 256)),
+    dict(type='CenterCrop', crop_size=224),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
     dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
@@ -62,8 +45,8 @@ test_pipeline = [
         num_clips=10,
         test_mode=True),
     dict(type='DecordDecode'),
-    dict(type='Resize', scale=(-1, 128)),
-    dict(type='ThreeCrop', crop_size=112),
+    dict(type='Resize', scale=(-1, 256)),
+    dict(type='ThreeCrop', crop_size=256),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
     dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
@@ -71,7 +54,7 @@ test_pipeline = [
 ]
 data = dict(
     videos_per_gpu=32,
-    workers_per_gpu=2,
+    workers_per_gpu=8,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=dataset_type,
@@ -91,6 +74,3 @@ data = dict(
 
 # evaluation
 evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'])
-
-# work_dir
-work_dir = './work_dirs/x3d_m_16x4_kinetics400_video_adam/'
