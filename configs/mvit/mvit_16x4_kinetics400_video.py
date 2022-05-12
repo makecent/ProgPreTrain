@@ -11,8 +11,8 @@ model = dict(
     test_cfg=dict(average_clips='prob'))
 
 checkpoint_config = dict(interval=1)
-evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'], by_epoch=False)
+evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'], by_epoch=True)
 # lr settings
-data = dict(videos_per_gpu=8)
+data = dict(videos_per_gpu=4)
 # work_dir
 work_dir = './work_dirs/mvit_16x4_kinetics400_video/'

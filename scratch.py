@@ -1,23 +1,13 @@
-from pytorchvideo.models import create_multiscale_vision_transformers
+import custom_modules
+from mmaction.models.builder import build_model
+from mmaction.datasets.builder import build_dataset
+from mmcv import Config
 import torch
+cfg = Config.fromfile("configs/mvit/mvit_16x4_kinetics400_video.py")
 
-spatial_size = 224
-temporal_size = 16
-embed_dim_mul = [[1, 2.0], [3, 2.0], [14, 2.0]]
-atten_head_mul = [[1, 2.0], [3, 2.0], [14, 2.0]]
-pool_q_stride_size = [[1, 1, 2, 2], [3, 1, 2, 2], [14, 1, 2, 2]]
-pool_kv_stride_adaptive = [1, 8, 8]
-pool_kvq_kernel = [3, 3, 3]
-head_num_classes = 400
-MViT_B = create_multiscale_vision_transformers(
-    spatial_size=spatial_size,
-    temporal_size=temporal_size,
-    embed_dim_mul=embed_dim_mul,
-    atten_head_mul=atten_head_mul,
-    pool_q_stride_size=pool_q_stride_size,
-    pool_kv_stride_adaptive=pool_kv_stride_adaptive,
-    pool_kvq_kernel=pool_kvq_kernel,
-    head_num_classes=head_num_classes)
+model = build_model(cfg.model)
+dataset = build_dataset(cfg.data.train)
+input = dataset[0]
+y = model(imgs=input['imgs'][None, :], label=input['label'][None, :])
 
-x = torch.randn(1, 3, 16, 224, 224)
-y = MViT_B(x)
+print("fi")
