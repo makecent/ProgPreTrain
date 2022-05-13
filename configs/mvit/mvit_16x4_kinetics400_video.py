@@ -12,6 +12,7 @@ model = dict(
 
 checkpoint_config = dict(interval=1)
 evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'], by_epoch=True)
+log_config = dict(interval=1000)
 # lr settings
 data = dict(videos_per_gpu=4)
 # work_dir
