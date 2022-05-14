@@ -1,7 +1,7 @@
 from .apn import *
 from .apn_head import *
-from .mvit import MultiscaleVisionTransformers
-# from .mvit_me import MultiscaleVisionTransformers
+# from .mvit import MultiscaleVisionTransformers
+from .mvit_me import MultiscaleVisionTransformers
 from .mvit_head import MViTHead
 
 __all__ = [
