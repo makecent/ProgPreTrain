@@ -37,10 +37,10 @@ val_pipeline = [
 ]
 test_pipeline = [
     dict(type='DecordInit'),
-    dict(type='SampleFrames', clip_len=clip_len, frame_interval=frame_interval, num_clips=num_clips, test_mode=True),
+    dict(type='SampleFrames', clip_len=clip_len, frame_interval=frame_interval, num_clips=5, test_mode=True),
     dict(type='DecordDecode'),
     dict(type='Resize', scale=(-1, 256)),
-    dict(type='ThreeCrop', crop_size=256),
+    dict(type='CenterCrop', crop_size=225),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
     dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
