@@ -420,7 +420,65 @@ class MultiScaleAttention(nn.Module):
             x (torch.Tensor): Input tensor.
             thw_shape (List): The shape of the input tensor (before flattening).
         """
+        if self.pool_q is None:
+            self.forward_3d(x, thw_shape)
+        elif self.pool_q.stride == (1, 2, 2):
+            self.forward_2d(x, thw_shape)
+        elif self.pool_q.stride == (2, 1, 1):
+            self.forward_1d(x, thw_shape)
+        else:
+            raise ValueError
+
+    def forward_3d(
+            self, x: torch.Tensor, thw_shape: List[int]
+    ) -> Tuple[torch.Tensor, List[int]]:
+        """
+        Args:
+            x (torch.Tensor): Input tensor.
+            thw_shape (List): The shape of the input tensor (before flattening).
+        """
+
+        B, N, C = x.shape
+        if self.pool_first:
+            x = x.reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+            q = k = v = x
+            q, q_shape, k, k_shape, v, v_shape = self._qkv_pool(q, k, v, thw_shape)
+            q_N, k_N, v_N = self._get_qkv_length(q_shape, k_shape, v_shape)
+            q, k, v = self._reshape_qkv_to_seq(q, k, v, q_N, v_N, k_N, B, C)
+            q, k, v = self._qkv_proj(q, q_N, k, k_N, v, v_N, B, C)
+        else:
+            if self.separate_qkv:
+                q = k = v = x
+                q, k, v = self._qkv_proj(q, N, k, N, v, N, B, C)
+            else:
+                qkv = (
+                    self.qkv(x)
+                        .reshape(B, N, 3, self.num_heads, -1)
+                        .permute(2, 0, 3, 1, 4)
+                )
+                q, k, v = qkv[0], qkv[1], qkv[2]
+            q, q_shape, k, k_shape, v, v_shape = self._qkv_pool(q, k, v, thw_shape)
+
+        attn = (q * self.scale) @ k.transpose(-2, -1)
+        attn = attn.softmax(dim=-1)
+
+        N = q.shape[2]
+
+        if self.residual_pool:
+            x = (attn @ v + q).transpose(1, 2).reshape(B, N, C)
+        else:
+            x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+
+        x = self.proj(x)
+        if self.dropout_rate > 0.0:
+            x = self.proj_drop(x)
+        return x, q_shape
+
+    def forward_2d(
+            self, x: torch.Tensor, thw_shape: List[int]
+    ) -> Tuple[torch.Tensor, List[int]]:
         # Spatial self-attention
+
         B, N, C = x.shape
         if self.pool_first:
             x = x.reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
@@ -467,55 +525,67 @@ class MultiScaleAttention(nn.Module):
         N = x.shape[2]
         x = x.transpose(1, 2).reshape(B, N, C)
 
-        # # Temporal self-attention
-        # B, N, C = x.shape
-        # if self.pool_first:
-        #     x = x.reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
-        #     q = k = v = x
-        #     q, q_shape, k, k_shape, v, v_shape = self._qkv_pool(q, k, v, thw_shape)
-        #     q_N, k_N, v_N = self._get_qkv_length(q_shape, k_shape, v_shape)
-        #     q, k, v = self._reshape_qkv_to_seq(q, k, v, q_N, v_N, k_N, B, C)
-        #     q, k, v = self._qkv_proj(q, q_N, k, k_N, v, v_N, B, C)
-        # else:
-        #     if self.separate_qkv:
-        #         q = k = v = x
-        #         q, k, v = self._qkv_proj(q, N, k, N, v, N, B, C)
-        #     else:
-        #         qkv = (
-        #             self.qkv(x)
-        #                 .reshape(B, N, 3, self.num_heads, -1)
-        #                 .permute(2, 0, 3, 1, 4)
-        #         )
-        #         q, k, v = qkv[0], qkv[1], qkv[2]
-        #     q, q_shape, k, k_shape, v, v_shape = self._qkv_pool(q, k, v, thw_shape)
-        #
-        # Tq, Hq, Wq = q_shape
-        # Tk, Hk, Wk = k_shape
-        # Tv, Hv, Wv = v_shape
-        #
-        # cls_q, q = q.split([1, q.shape[2] - 1], dim=2)
-        # cls_k, k = k.split([1, k.shape[2] - 1], dim=2)
-        # cls_v, v = v.split([1, v.shape[2] - 1], dim=2)
-        #
-        # q = torch.cat([cls_q.unsqueeze(dim=3).repeat([1, 1, Hq * Wq, 1, 1]), q.view(B, self.num_heads, Tq, Hq * Wq, C).transpose(2, 3)],
-        #               dim=3)
-        # k = torch.cat([cls_k.unsqueeze(dim=3).repeat([1, 1, Hk * Wk, 1, 1]), k.view(B, self.num_heads, Tk, Hk * Wk, C).transpose(2, 3)],
-        #               dim=3)
-        # v = torch.cat([cls_v.unsqueeze(dim=3).repeat([1, 1, Hv * Wv, 1, 1]), v.view(B, self.num_heads, Tv, Hv * Wv, C).transpose(2, 3)],
-        #               dim=3)
-        #
-        # attn_hw = (q @ k.transpose(-2, -1)) * self.scale
-        # attn_hw = attn_hw.softmax(dim=-1)
-        #
-        # if self.residual_pool:
-        #     x = (attn_hw @ v + q)
-        # else:
-        #     x = (attn_hw @ v)
-        # cls, x = x.split([1, x.shape[3] - 1], dim=3)
-        # cls = cls.mean(dim=2)
-        # x = torch.cat([cls, x.transpose(2, 3).flatten(start_dim=2, end_dim=3)], dim=2)
-        # N = q.shape[2]
-        # x = x.transpose(1, 2).reshape(B, N, C)
+        # Projection
+        x = self.proj(x)
+        if self.dropout_rate > 0.0:
+            x = self.proj_drop(x)
+        return x, q_shape
+
+    def forward_1d(
+            self, x: torch.Tensor, thw_shape: List[int]
+    ) -> Tuple[torch.Tensor, List[int]]:
+        # Temporal self-attention
+        B, N, C = x.shape
+        if self.pool_first:
+            x = x.reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+            q = k = v = x
+            q, q_shape, k, k_shape, v, v_shape = self._qkv_pool(q, k, v, thw_shape)
+            q_N, k_N, v_N = self._get_qkv_length(q_shape, k_shape, v_shape)
+            q, k, v = self._reshape_qkv_to_seq(q, k, v, q_N, v_N, k_N, B, C)
+            q, k, v = self._qkv_proj(q, q_N, k, k_N, v, v_N, B, C)
+        else:
+            if self.separate_qkv:
+                q = k = v = x
+                q, k, v = self._qkv_proj(q, N, k, N, v, N, B, C)
+            else:
+                qkv = (
+                    self.qkv(x)
+                        .reshape(B, N, 3, self.num_heads, -1)
+                        .permute(2, 0, 3, 1, 4)
+                )
+                q, k, v = qkv[0], qkv[1], qkv[2]
+            q, q_shape, k, k_shape, v, v_shape = self._qkv_pool(q, k, v, thw_shape)
+
+        Tq, Hq, Wq = q_shape
+        Tk, Hk, Wk = k_shape
+        Tv, Hv, Wv = v_shape
+
+        cls_q, q = q.split([1, q.shape[2] - 1], dim=2)
+        cls_k, k = k.split([1, k.shape[2] - 1], dim=2)
+        cls_v, v = v.split([1, v.shape[2] - 1], dim=2)
+
+        q = torch.cat([cls_q.unsqueeze(dim=3).repeat([1, 1, Hq * Wq, 1, 1]),
+                       q.view(B, self.num_heads, Tq, Hq * Wq, C // self.num_heads).transpose(2, 3)],
+                      dim=3)
+        k = torch.cat([cls_k.unsqueeze(dim=3).repeat([1, 1, Hk * Wk, 1, 1]),
+                       k.view(B, self.num_heads, Tk, Hk * Wk, C // self.num_heads).transpose(2, 3)],
+                      dim=3)
+        v = torch.cat([cls_v.unsqueeze(dim=3).repeat([1, 1, Hv * Wv, 1, 1]),
+                       v.view(B, self.num_heads, Tv, Hv * Wv, C // self.num_heads).transpose(2, 3)],
+                      dim=3)
+
+        attn_hw = (q @ k.transpose(-2, -1)) * self.scale
+        attn_hw = attn_hw.softmax(dim=-1)
+
+        if self.residual_pool:
+            x = (attn_hw @ v + q)
+        else:
+            x = (attn_hw @ v)
+        cls, x = x.split([1, x.shape[3] - 1], dim=3)
+        cls = cls.mean(dim=2)
+        x = torch.cat([cls, x.transpose(2, 3).flatten(start_dim=2, end_dim=3)], dim=2)
+        N = q.shape[2]
+        x = x.transpose(1, 2).reshape(B, N, C)
 
         # Projection
         x = self.proj(x)
@@ -690,7 +760,7 @@ class MultiScaleBlock(nn.Module):
         return x, thw_shape_new
 
 
-@BACKBONES.register_module(name="MViTMe")
+@BACKBONES.register_module(name="MViT2Plus1D")
 class MultiscaleVisionTransformers(nn.Module):
     """
     Multiscale Vision Transformers
@@ -729,9 +799,9 @@ class MultiscaleVisionTransformers(nn.Module):
         mvit_video_base_config = {
             "spatial_size": 224,
             "temporal_size": 16,
-            "embed_dim_mul": [[1, 2.0], [3, 2.0], [14, 2.0]],
-            "atten_head_mul": [[1, 2.0], [3, 2.0], [14, 2.0]],
-            "pool_q_stride_size": [[1, 1, 2, 2], [3, 1, 2, 2], [14, 1, 2, 2]],
+            "embed_dim_mul": [[1, 2.0], [2, 2.0], [3, 2.0], [7, 2.0], [14, 2.0], [15, 2.0]],
+            "atten_head_mul": [[1, 2.0], [2, 2.0], [3, 2.0], [7, 2.0], [14, 2.0], [15, 2.0]],
+            "pool_q_stride_size": [[1, 1, 2, 2], [2, 2, 1, 1], [3, 1, 2, 2], [7, 2, 1, 1], [14, 1, 2, 2], [15, 2, 1, 1]],
             "pool_kv_stride_adaptive": [1, 8, 8],
             "pool_kvq_kernel": [3, 3, 3],
         }
@@ -900,7 +970,7 @@ class MultiscaleVisionTransformers(nn.Module):
                                               # Patch embed config.
                                               enable_patch_embed: bool = True,
                                               input_channels: int = 3,
-                                              patch_embed_dim: int = 96,
+                                              patch_embed_dim: int = 32,                            # 96
                                               conv_patch_embed_kernel: Tuple[int] = (3, 7, 7),
                                               conv_patch_embed_stride: Tuple[int] = (2, 4, 4),
                                               conv_patch_embed_padding: Tuple[int] = (1, 3, 3),
