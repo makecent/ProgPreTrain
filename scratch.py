@@ -1,13 +1,17 @@
-import custom_modules
-from mmaction.models.builder import build_model
-from mmaction.datasets.builder import build_dataset
-from mmcv import Config
 import torch
-cfg = Config.fromfile("configs/mvit/mvit_16x4_kinetics400_video.py")
+from fvcore.nn import FlopCountAnalysis, parameter_count, flop_count_table
+from mmcv import Config
+from mmaction.models.builder import build_model, build_backbone
 
-model = build_model(cfg.model)
-dataset = build_dataset(cfg.data.train)
-input = dataset[0]
-y = model(imgs=input['imgs'][None, :], label=input['label'][None, :])
+inputs = torch.randn(1, 3, 16, 224, 224)
+model = build_backbone(Config.fromfile("configs/mvit/mvit_2d_16x4_kinetics400_video.py").model.backbone)
 
-print("fi")
+# inputs = (torch.randn(1, 1, 3, 16, 224, 224), torch.randint(10, (1, 1)))
+# model = build_model(Config.fromfile("configs/mvit/mvit_16x4_kinetics400_video.py").model)
+
+flops = FlopCountAnalysis(model, inputs)
+print(flop_count_table(flops))
+params = parameter_count(model)
+
+print(f"FLOPS:\t{flops.total()}")
+print(f"Params:\t{params['']}")
