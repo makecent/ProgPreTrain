@@ -7,7 +7,7 @@ model = dict(
     type='Recognizer3D',
     backbone=dict(type='MViT_Me', arch='base_16x4', pretrained=False),
     cls_head=dict(type='MViTHead', num_classes=400, in_channels=768),
-    train_cfg=None,
+    train_cfg=dict(blending=dict(type='MixupBlending', num_classes=400, alpha=.2)),
     test_cfg=dict(average_clips='prob'))
 
 checkpoint_config = dict(interval=1)

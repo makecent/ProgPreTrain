@@ -519,45 +519,6 @@ class MultiScaleAttention(nn.Module):
         cls, x = x.split([1, x.shape[3]-1], dim=3)
         cls = cls.mean(dim=2)
         x = torch.cat([cls, x.flatten(start_dim=2, end_dim=3)], dim=2)
-        # N = x.shape[2]
-        # x = x.transpose(1, 2).reshape(B, N, C)
-        #
-        # # Projection
-        # x = self.proj(x)
-        # if self.dropout_rate > 0.0:
-        #     x = self.proj_drop(x)
-
-        # Temporal self-attention
-        # B, N, C = x.shape
-        q = k = v = x
-        Tq, Hq, Wq = q_shape
-        Tk, Hk, Wk = q_shape
-        Tv, Hv, Wv = q_shape
-
-        cls_q, q = q.split([1, q.shape[2] - 1], dim=2)
-        cls_k, k = k.split([1, k.shape[2] - 1], dim=2)
-        cls_v, v = v.split([1, v.shape[2] - 1], dim=2)
-
-        q = torch.cat([cls_q.unsqueeze(dim=3).repeat([1, 1, Hq * Wq, 1, 1]),
-                       q.view(B, self.num_heads, Tq, Hq * Wq, C // self.num_heads).transpose(2, 3)],
-                      dim=3)
-        k = torch.cat([cls_k.unsqueeze(dim=3).repeat([1, 1, Hk * Wk, 1, 1]),
-                       k.view(B, self.num_heads, Tk, Hk * Wk, C // self.num_heads).transpose(2, 3)],
-                      dim=3)
-        v = torch.cat([cls_v.unsqueeze(dim=3).repeat([1, 1, Hv * Wv, 1, 1]),
-                       v.view(B, self.num_heads, Tv, Hv * Wv, C // self.num_heads).transpose(2, 3)],
-                      dim=3)
-
-        attn_hw = (q @ k.transpose(-2, -1)) * self.scale
-        attn_hw = attn_hw.softmax(dim=-1)
-
-        if self.residual_pool:
-            x = (attn_hw @ v + q)
-        else:
-            x = (attn_hw @ v)
-        cls, x = x.split([1, x.shape[3] - 1], dim=3)
-        cls = cls.mean(dim=2)
-        x = torch.cat([cls, x.transpose(2, 3).flatten(start_dim=2, end_dim=3)], dim=2)
         N = x.shape[2]
         x = x.transpose(1, 2).reshape(B, N, C)
 
@@ -565,6 +526,7 @@ class MultiScaleAttention(nn.Module):
         x = self.proj(x)
         if self.dropout_rate > 0.0:
             x = self.proj_drop(x)
+
         return x, q_shape
 
 
@@ -734,7 +696,7 @@ class MultiScaleBlock(nn.Module):
         return x, thw_shape_new
 
 
-@BACKBONES.register_module(name="MViT2Plus1D")
+@BACKBONES.register_module(name="MViT2D")
 class MultiscaleVisionTransformers(nn.Module):
     """
     Multiscale Vision Transformers
