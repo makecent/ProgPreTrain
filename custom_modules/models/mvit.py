@@ -712,8 +712,9 @@ class MultiscaleVisionTransformers(nn.Module):
             ),
             "mvit_base_16": "{}/imagenet/MVIT_B_16_f292487636.pyth".format(MODEL_ZOO_ROOT_DIR),
         }
-
-        if arch == 'base_16x4':
+        if arch == 'small_16x4':
+            mvit_config = mvit_video_small_config
+        elif arch == 'base_16x4':
             mvit_config = mvit_video_base_config
         elif arch == 'base_32x3':
             mvit_config = mvit_video_base_32x3_config

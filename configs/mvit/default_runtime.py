@@ -1,5 +1,6 @@
 custom_imports = dict(imports=['custom_modules'], allow_failed_imports=False)
 
+evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'], by_epoch=True)
 checkpoint_config = dict(interval=1)
 log_config = dict(
     interval=20,
