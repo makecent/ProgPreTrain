@@ -747,6 +747,18 @@ class MultiscaleVisionTransformers(nn.Module):
         #                             [15, 1, 1, 1]],
         #     "pool_kvq_kernel": [3, 3, 3],
         # }
+        mvit_video_small_config = {
+            "spatial_size": 224,
+            "temporal_size": 16,
+            "patch_embed_dim": 128,
+            "conv_patch_embed_kernel": (3, 8, 8),
+            "conv_patch_embed_stride": (2, 8, 8),
+            "embed_dim_mul": [[3, 2.0], [10, 2.0]],
+            "atten_head_mul": [[3, 2.0], [10, 2.0]],
+            "pool_q_stride_size": [[3, 1, 2, 2], [10, 1, 2, 2]],
+            "pool_kv_stride_adaptive": [1, 8, 8],
+            "pool_kvq_kernel": [3, 3, 3],
+        }
         mvit_video_base_config = {
             "spatial_size": 224,
             "temporal_size": 16,
@@ -788,7 +800,9 @@ class MultiscaleVisionTransformers(nn.Module):
             "mvit_base_16": "{}/imagenet/MVIT_B_16_f292487636.pyth".format(MODEL_ZOO_ROOT_DIR),
         }
 
-        if arch == 'base_16x4':
+        if arch == 'small_16x4':
+            mvit_config = mvit_video_small_config
+        elif arch == 'base_16x4':
             mvit_config = mvit_video_base_config
         elif arch == 'base_32x3':
             mvit_config = mvit_video_base_32x3_config

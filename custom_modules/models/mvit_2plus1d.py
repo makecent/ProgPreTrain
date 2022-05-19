@@ -512,6 +512,7 @@ class MultiScaleAttention(nn.Module):
         attn_hw = (q @ k.transpose(-2, -1)) * self.scale
         attn_hw = attn_hw.softmax(dim=-1)
 
+        # TODO: residual at the end or between spatial-temporal attention?
         if self.residual_pool:
             x = (attn_hw @ v + q)
         else:
