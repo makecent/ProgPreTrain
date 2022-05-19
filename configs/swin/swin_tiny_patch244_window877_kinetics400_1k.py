@@ -1,5 +1,5 @@
 _base_ = [
-    '../base/models/swin/swin_tiny.py', '../base/default_runtime.py'
+    './swin_tiny.py', '../base/default_runtime.py'
 ]
 model=dict(backbone=dict(patch_size=(2,4,4), drop_path_rate=0.1), test_cfg=dict(max_testing_views=4))
 

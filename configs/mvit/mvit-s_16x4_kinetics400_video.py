@@ -10,7 +10,7 @@ model = dict(
     train_cfg=dict(blending=dict(type='MixupBlending', num_classes=400, alpha=.8)),
     test_cfg=dict(average_clips='prob'))
 
-optimizer = dict(lr=1e-2)
+optimizer = dict(lr=3e-4)
 log_config = dict(interval=1000)
 # lr settings
 data = dict(videos_per_gpu=8)

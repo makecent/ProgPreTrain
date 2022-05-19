@@ -1,6 +1,6 @@
-_base_ = ["../base/schedules/adamw_3e-4_30.py",
-          "../base/default_runtime.py",
-          "../base/datasets/kinetics400/video/kinetics400_16x4x1x224x224_video.py"]
+_base_ = [".adamw_3e-4_30.py",
+          "default_runtime.py",
+          "kinetics400_16x4x1x224x224_video.py"]
 
 # model settings
 model = dict(
@@ -10,10 +10,7 @@ model = dict(
     train_cfg=dict(blending=dict(type='MixupBlending', num_classes=400, alpha=.8)),
     test_cfg=dict(average_clips='prob'))
 
-checkpoint_config = dict(interval=1)
-evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'], by_epoch=True)
+optimizer = dict(lr=3e-4)
 log_config = dict(interval=1000)
 # lr settings
 data = dict(videos_per_gpu=4)
-# work_dir
-work_dir = './work_dirs/mvit_16x4_kinetics400_video/'

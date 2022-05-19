@@ -15,6 +15,7 @@ from pytorchvideo.models.stem import create_conv_patch_embed
 from pytorchvideo.models.weight_init import init_net_weights
 from torch.hub import load_state_dict_from_url
 from torch.nn.common_types import _size_2_t, _size_3_t
+from .stem import create_early_conv_patch_embed
 
 
 class Mlp(nn.Module):
@@ -851,6 +852,7 @@ class MultiscaleVisionTransformers(nn.Module):
                                               conv_patch_embed_kernel: Tuple[int] = (3, 7, 7),
                                               conv_patch_embed_stride: Tuple[int] = (2, 4, 4),
                                               conv_patch_embed_padding: Tuple[int] = (1, 3, 3),
+                                              early_convolution=False,                                # Modified
                                               enable_patch_embed_norm: bool = False,
                                               use_2d_patch: bool = False,
                                               # Attention block config.
@@ -905,18 +907,28 @@ class MultiscaleVisionTransformers(nn.Module):
 
         conv_patch_op = nn.Conv2d if use_2d_patch else nn.Conv3d
 
-        patch_embed = (
-            create_conv_patch_embed(
-                in_channels=input_channels,
-                out_channels=patch_embed_dim,
-                conv_kernel_size=conv_patch_embed_kernel,
-                conv_stride=conv_patch_embed_stride,
-                conv_padding=conv_patch_embed_padding,
-                conv=conv_patch_op,
+        if early_convolution:
+            patch_embed = (
+                create_early_conv_patch_embed(
+                    in_channels=input_channels,
+                    out_channels=patch_embed_dim,
+                )
+                if enable_patch_embed
+                else None
             )
-            if enable_patch_embed
-            else None
-        )
+        else:
+            patch_embed = (
+                create_conv_patch_embed(
+                    in_channels=input_channels,
+                    out_channels=patch_embed_dim,
+                    conv_kernel_size=conv_patch_embed_kernel,
+                    conv_stride=conv_patch_embed_stride,
+                    conv_padding=conv_patch_embed_padding,
+                    conv=conv_patch_op,
+                )
+                if enable_patch_embed
+                else None
+            )
 
         input_dims = [temporal_size, spatial_size[0], spatial_size[1]]
         input_stirde = (
