@@ -155,15 +155,15 @@ class WindowAttention3D(nn.Module):
         attn = q @ k.transpose(-2, -1)
 
         relative_position_bias = self.relative_position_bias_table[
-            self.relative_position_index[:N, :H * W].reshape(-1)].reshape(
-            T, H * W, H * W, -1)  # Wd, Wh*Ww, Wh*Ww,nH
+            torch.stack([self.relative_position_index[i:i + H * W, i:i + H * W] for i in range(0, N, H * W)])
+        ]  # Wd, Wh*Ww, Wh*Ww,nH
         relative_position_bias = relative_position_bias.permute(3, 0, 1, 2).contiguous()  # nH, Wd, Wh*Ww, Wh*Ww
         attn = attn + relative_position_bias.unsqueeze(0)  # B_, nH, Wd, Wh, Ww
 
         if mask is not None:
             nW = mask.shape[0]
-            mask = mask[:, :N, :H * W].view(-1, T, H * W, H * W)
-            attn = attn.view(B_ // nW, nW, self.num_heads, T, H * W, H * W) + mask.unsqueeze(1).unsqueeze(0)
+            mask_ = torch.stack([mask[:, i:i + H * W, i:i + H * W] for i in range(0, N, H * W)]).transpose(0, 1)
+            attn = attn.view(B_ // nW, nW, self.num_heads, T, H * W, H * W) + mask_.unsqueeze(1).unsqueeze(0)
             attn = attn.view(-1, self.num_heads, T, H * W, H * W)
             attn = self.softmax(attn)
         else:
