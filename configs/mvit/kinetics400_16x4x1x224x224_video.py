@@ -29,7 +29,7 @@ val_pipeline = [
     dict(type='DecordInit'),
     dict(type='SampleFrames', clip_len=clip_len, frame_interval=frame_interval, num_clips=num_clips, test_mode=True),
     dict(type='DecordDecode'),
-    # dict(type='Resize', scale=(-1, 256)),
+    dict(type='Resize', scale=(-1, 256)),
     dict(type='CenterCrop', crop_size=224),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
