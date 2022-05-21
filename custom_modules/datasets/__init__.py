@@ -1,5 +1,6 @@
 from .custom_dataset import CustomVideoDataset
-from .my_piplines import ProgLabel
+from .piplines import ProgLabel
+from .blendings import BatchAugBlending
 
-__all__ = ['custom_dataset', 'my_piplines']
+__all__ = ['custom_dataset', 'piplines.py']
 

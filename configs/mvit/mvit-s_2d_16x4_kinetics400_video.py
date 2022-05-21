@@ -1,4 +1,4 @@
-_base_ = ["adamw_3e-4_30.py",
+_base_ = ["adamw_3e-4_200.py",
           "default_runtime.py",
           "kinetics400_16x4x1x224x224_video.py"]
 

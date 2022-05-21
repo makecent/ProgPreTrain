@@ -672,6 +672,7 @@ class MultiscaleVisionTransformers(nn.Module):
             "pool_q_stride_size": [[3, 1, 2, 2], [10, 1, 2, 2]],
             "pool_kv_stride_adaptive": [1, 8, 8],
             "pool_kvq_kernel": [3, 3, 3],
+            "droppath_rate_block": 0.2,
         }
         mvit_video_base_config = {
             "spatial_size": 224,
@@ -681,6 +682,7 @@ class MultiscaleVisionTransformers(nn.Module):
             "pool_q_stride_size": [[1, 1, 2, 2], [3, 1, 2, 2], [14, 1, 2, 2]],
             "pool_kv_stride_adaptive": [1, 8, 8],
             "pool_kvq_kernel": [3, 3, 3],
+            "droppath_rate_block": 0.3,
         }
         mvit_video_base_32x3_config = {
             "spatial_size": 224,
