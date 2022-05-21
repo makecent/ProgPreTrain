@@ -11,7 +11,7 @@ model = dict(
     # train_cfg=None,
     test_cfg=dict(average_clips='prob'))
 
-optimizer = dict(lr=1.6e-3 * 8*8*2/512)
+optimizer = dict(lr=1.6e-3 * 16*8*2/512)  # 1.6e-3 x mini_batch x num_gpus x num_blending / 512
 log_config = dict(interval=1000)
 # lr settings
-data = dict(videos_per_gpu=8)
+data = dict(videos_per_gpu=16)
