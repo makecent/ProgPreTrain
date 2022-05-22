@@ -659,7 +659,7 @@ class MultiscaleVisionTransformers(nn.Module):
     The builder can be found in `create_mvit`.
     """
 
-    def __init__(self, arch='base_16x4', pretrained=True):
+    def __init__(self, arch='base_16x4', pretrained=True, **kwargs):
         super().__init__()
         mvit_video_small_config = {
             "spatial_size": 224,
@@ -725,6 +725,7 @@ class MultiscaleVisionTransformers(nn.Module):
             mvit_config = mvit_image_base_16_config
         else:
             raise TypeError(f"{arch} not supported")
+        mvit_config.update(**kwargs)
         set_attributes(self, self.create_multiscale_vision_transformers(**mvit_config))
         if pretrained:
             checkpoint = load_state_dict_from_url(
