@@ -7,5 +7,5 @@ lr_config = dict(policy='CosineAnnealing',
                  warmup='linear',
                  warmup_ratio=0.01,
                  warmup_iters=30,
-                 warmup_by_epoch=False)
+                 warmup_by_epoch=True)
 total_epochs = 200
