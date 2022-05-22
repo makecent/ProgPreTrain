@@ -1,5 +1,4 @@
-_base_ = ["adamw_3e-4_200.py",
-          "default_runtime.py",
+_base_ = ["default_runtime.py",
           "kinetics400_unregl.py"]
 
 # model settings
