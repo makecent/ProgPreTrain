@@ -715,6 +715,7 @@ class MultiscaleVisionTransformers(nn.Module):
             ),
             "mvit_base_16": "{}/imagenet/MVIT_B_16_f292487636.pyth".format(MODEL_ZOO_ROOT_DIR),
         }
+
         if arch == 'small_16x4':
             mvit_config = mvit_video_small_config
         elif arch == 'base_16x4':
@@ -838,7 +839,6 @@ class MultiscaleVisionTransformers(nn.Module):
         if self.head is not None:
             x = self.head(x)
         return x
-
 
     def create_multiscale_vision_transformers(self,
                                               *,

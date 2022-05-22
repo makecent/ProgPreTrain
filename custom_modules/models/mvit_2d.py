@@ -423,7 +423,7 @@ class MultiScaleAttention(nn.Module):
         if self.pool_q is None:
             x, q_shape = self.forward_3d(x, thw_shape)
         else:
-            x, q_shape = self.forward_2plus1d(x, thw_shape)
+            x, q_shape = self.forward_2d(x, thw_shape)
         return x, q_shape
 
     def forward_3d(
@@ -471,7 +471,7 @@ class MultiScaleAttention(nn.Module):
             x = self.proj_drop(x)
         return x, q_shape
 
-    def forward_2plus1d(
+    def forward_2d(
             self, x: torch.Tensor, thw_shape: List[int]
     ) -> Tuple[torch.Tensor, List[int]]:
         # Spatial self-attention
@@ -730,23 +730,8 @@ class MultiscaleVisionTransformers(nn.Module):
     The builder can be found in `create_mvit`.
     """
 
-    def __init__(self, arch='base_16x4', pretrained=True):
+    def __init__(self, arch='base_16x4', pretrained=True, **kwargs):
         super().__init__()
-        # mvit_video_base_config = {
-        #     "spatial_size": 224,
-        #     "temporal_size": 16,
-        #     "embed_dim_mul": [[1, 2.0], [2, 2.0], [3, 2.0], [9, 2.0], [14, 2.0], [15, 2.0]],
-        #     "atten_head_mul": [[1, 2.0], [2, 2.0], [3, 2.0], [9, 2.0], [14, 2.0], [15, 2.0]],
-        #     "pool_q_stride_size": [[1, 1, 2, 2], [2, 2, 1, 1], [3, 1, 2, 2], [9, 2, 1, 1], [14, 1, 2, 2], [15, 2, 1, 1]],
-        #     "pool_kv_stride_size": [[0, 1, 8, 8],
-        #                             [1, 1, 4, 4],
-        #                             [2, 1, 1, 1],
-        #                             [3, 1, 2, 2], [4, 1, 2, 2], [5, 1, 2, 2], [6, 1, 2, 2], [7, 1, 2, 2], [8, 1, 2, 2],
-        #                             [9, 1, 1, 1], [10, 1, 1, 1], [11, 1, 1, 1], [12, 1, 1, 1], [13, 1, 1, 1],
-        #                             [14, 1, 1, 1],
-        #                             [15, 1, 1, 1]],
-        #     "pool_kvq_kernel": [3, 3, 3],
-        # }
         mvit_video_small_config = {
             "spatial_size": 224,
             "temporal_size": 16,
@@ -758,6 +743,7 @@ class MultiscaleVisionTransformers(nn.Module):
             "pool_q_stride_size": [[3, 1, 2, 2], [10, 1, 2, 2]],
             "pool_kv_stride_adaptive": [1, 8, 8],
             "pool_kvq_kernel": [3, 3, 3],
+            "droppath_rate_block": 0.2,
         }
         mvit_video_base_config = {
             "spatial_size": 224,
@@ -767,6 +753,7 @@ class MultiscaleVisionTransformers(nn.Module):
             "pool_q_stride_size": [[1, 1, 2, 2], [3, 1, 2, 2], [14, 1, 2, 2]],
             "pool_kv_stride_adaptive": [1, 8, 8],
             "pool_kvq_kernel": [3, 3, 3],
+            "droppath_rate_block": 0.3,
         }
         mvit_video_base_32x3_config = {
             "spatial_size": 224,
@@ -810,6 +797,7 @@ class MultiscaleVisionTransformers(nn.Module):
             mvit_config = mvit_image_base_16_config
         else:
             raise TypeError(f"{arch} not supported")
+        mvit_config.update(**kwargs)
         set_attributes(self, self.create_multiscale_vision_transformers(**mvit_config))
         if pretrained:
             checkpoint = load_state_dict_from_url(
