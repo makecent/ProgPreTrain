@@ -4,7 +4,6 @@ import torch
 from torch.distributions.beta import Beta
 
 
-
 @BLENDINGS.register_module()
 class BatchAugBlending:
     """Implementing
