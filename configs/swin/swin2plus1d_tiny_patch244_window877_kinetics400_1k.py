@@ -94,7 +94,7 @@ optimizer = dict(type='AdamW', lr=1e-3, betas=(0.9, 0.999), weight_decay=0.02,
                                                  'relative_position_bias_table': dict(decay_mult=0.),
                                                  'norm': dict(decay_mult=0.),
                                                  'backbone': dict(lr_mult=0.1)}))
-optimizer_config = dict(grad_clip=dict(max_norm=1.0))
+optimizer_config = dict(grad_clip=None)
 # learning policy
 lr_config = dict(
     policy='CosineAnnealing',
