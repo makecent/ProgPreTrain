@@ -60,7 +60,7 @@ test_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=1,
+    videos_per_gpu=8,
     workers_per_gpu=4,
     val_dataloader=dict(
         videos_per_gpu=1,
@@ -109,7 +109,6 @@ total_epochs = 30
 checkpoint_config = dict(interval=1)
 work_dir = './work_dirs/k400_swin_tiny_patch244_window877.py'
 find_unused_parameters = False
-
 
 # do not use mmdet version fp16
 # fp16 = None
