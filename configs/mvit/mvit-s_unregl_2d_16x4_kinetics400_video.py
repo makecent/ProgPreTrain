@@ -19,8 +19,8 @@ lr_config = dict(policy='CosineAnnealing',
                  min_lr_ratio=0.01,
                  warmup='linear',
                  warmup_ratio=0.01,
-                 warmup_iters=5,
+                 warmup_iters=10,
                  warmup_by_epoch=True)
-total_epochs = 50
+total_epochs = 100
 log_config = dict(interval=250)
 data = dict(videos_per_gpu=32)
