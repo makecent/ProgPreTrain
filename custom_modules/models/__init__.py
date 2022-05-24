@@ -7,6 +7,7 @@ from .mvit_head import MViTHead
 from .swin import SwinTransformer3D
 from .swin_2d import SwinTransformer3D
 from .swin_2plus1d import SwinTransformer3D
+from .timesformer import TimeSformer
 
 __all__ = [
     'apn', 'apn_head', 'MViTHead', "MultiscaleVisionTransformers", "SwinTransformer3D"
