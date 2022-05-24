@@ -1,4 +1,4 @@
-_base_ = ['../base/default_runtime.py']
+_base_ = ['default_runtime.py']
 
 # model settings
 model = dict(
