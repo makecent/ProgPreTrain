@@ -60,8 +60,8 @@ test_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=8,
-    workers_per_gpu=6,
+    videos_per_gpu=4,
+    workers_per_gpu=4,
     val_dataloader=dict(
         videos_per_gpu=1,
         workers_per_gpu=1
@@ -89,7 +89,7 @@ evaluation = dict(
     interval=5, metrics=['top_k_accuracy', 'mean_class_accuracy'])
 
 # optimizer
-optimizer = dict(type='AdamW', lr=1e-3, betas=(0.9, 0.999), weight_decay=0.02,
+optimizer = dict(type='AdamW', lr=5e-4, betas=(0.9, 0.999), weight_decay=0.02,
                  paramwise_cfg=dict(custom_keys={'absolute_pos_embed': dict(decay_mult=0.),
                                                  'relative_position_bias_table': dict(decay_mult=0.),
                                                  'norm': dict(decay_mult=0.),
