@@ -23,7 +23,7 @@ model = dict(
     test_cfg=dict(average_clips='prob'))
 
 # dataset settings
-dataset_type = 'RawFramesDataset'
+dataset_type = 'RawFrameDataset'
 data_root = 'my_data/sthv2/rawframes'
 data_root_val = 'my_data/sthv2/rawframes'
 ann_file_train = 'my_data/sthv2/sthv2_train_list_rawframes.txt'
