@@ -114,6 +114,7 @@ optimizer = dict(
     weight_decay=1e-4,
     nesterov=True)  # this lr is used for 8 gpus
 optimizer_config = dict(grad_clip=dict(max_norm=40, norm_type=2))
+
 # learning policy
 lr_config = dict(policy='step', step=[5, 10])
 total_epochs = 15
