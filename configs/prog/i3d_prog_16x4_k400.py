@@ -1,4 +1,4 @@
-_base_ = ["./default_runtime.py", "./kinetics400_16x4x224x224_video.py"]
+_base_ = ["./default_runtime.py", "./kinetics400_prog_16x4x224x224_video.py"]
 
 # model settings
 model = dict(
@@ -30,7 +30,7 @@ data = dict(videos_per_gpu=16)
 # optimizer
 optimizer = dict(
     type='SGD',
-    lr=0.01,  # this lr is used for 8 gpus
+    lr=0.005,
     momentum=0.9,
     weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=40, norm_type=2))

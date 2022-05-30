@@ -26,12 +26,12 @@ model = dict(
     train_cfg=None,
     test_cfg=dict(average_clips='prob'))
 
-data = dict(videos_per_gpu=32)
+data = dict(videos_per_gpu=16)
 
 # optimizer
 optimizer = dict(
     type='SGD',
-    lr=0.01,  # this lr is used for batch size 64
+    lr=0.005,  # 0.01 for batch size 64
     momentum=0.9,
     weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=40, norm_type=2))
