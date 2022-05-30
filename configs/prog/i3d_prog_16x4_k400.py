@@ -25,6 +25,7 @@ model = dict(
     train_cfg=None,
     test_cfg=dict(average_clips='prob'))
 
+log_config = dict(interval=2000)
 data = dict(videos_per_gpu=16)
 
 # optimizer
