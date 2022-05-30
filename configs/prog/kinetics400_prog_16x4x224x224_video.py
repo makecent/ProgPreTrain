@@ -10,9 +10,15 @@ img_norm_cfg = dict(
 train_pipeline = [
     dict(type='DecordInit'),
     dict(type='SampleFrames', clip_len=16, frame_interval=4, num_clips=1),
+    dict(type='ProgLabel', num_stages=10, ordinal=True),
     dict(type='DecordDecode'),
     dict(type='Resize', scale=(-1, 256)),
-    dict(type='RandomResizedCrop'),
+    dict(
+        type='MultiScaleCrop',
+        input_size=224,
+        scales=(1, 0.8),
+        random_crop=False,
+        max_wh_scale_gap=0),
     dict(type='Resize', scale=(224, 224), keep_ratio=False),
     dict(type='Flip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
@@ -53,8 +59,8 @@ test_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=32,
-    workers_per_gpu=8,
+    videos_per_gpu=8,
+    workers_per_gpu=6,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=dataset_type,
@@ -73,4 +79,4 @@ data = dict(
         pipeline=test_pipeline))
 
 # evaluation
-evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'])
+evaluation = dict(interval=5, metrics=['top_k_accuracy', 'mean_class_accuracy', 'MAE'])
