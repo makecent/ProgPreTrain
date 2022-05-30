@@ -105,6 +105,7 @@ class TimeSformer(nn.Module):
                  dropout_ratio=0.,
                  transformer_layers=None,
                  attention_type='divided_space_time',
+                 extra_kwargs=dict(),
                  norm_cfg=dict(type='LN', eps=1e-6),
                  **kwargs):
         super().__init__(**kwargs)
@@ -118,6 +119,7 @@ class TimeSformer(nn.Module):
         self.embed_dims = embed_dims
         self.num_transformer_layers = num_transformer_layers
         self.attention_type = attention_type
+        self.extra_kwargs = extra_kwargs
 
         self.patch_embed = PatchEmbed(
             img_size=img_size,
@@ -187,7 +189,8 @@ class TimeSformer(nn.Module):
                                 num_frames=num_frames,
                                 dropout_layer=dict(
                                     type='DropPath', drop_prob=dpr[i]),
-                                norm_cfg=dict(type='LN', eps=1e-6)),
+                                norm_cfg=dict(type='LN', eps=1e-6),
+                                **extra_kwargs),
                         ],
                         ffn_cfgs=dict(
                             type='FFNWithNorm',

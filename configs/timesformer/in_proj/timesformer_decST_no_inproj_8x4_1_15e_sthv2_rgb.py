@@ -1,6 +1,5 @@
-import numpy as np
 _base_ = ['../default_runtime.py']
-dpr = np.linspace(0, 0.1, 6)
+
 # model settings
 model = dict(
     type='Recognizer3D',
@@ -15,36 +14,9 @@ model = dict(
         embed_dims=768,
         in_channels=3,
         dropout_ratio=0.,
-        transformer_layers=dict(
-                    type='TransformerLayerSequence',
-                    transformerlayers=[
-                    dict(
-                        type='BaseTransformerLayer',
-                        attn_cfgs=[
-                            dict(
-                                type='DecomposedAttentionWithNorm',
-                                embed_dims=768,
-                                num_heads=12,
-                                num_frames=8,
-                                in_proj=False,                       # Modification
-                                dropout_layer=dict(
-                                    type='DropPath', drop_prob=dpr[i]),
-                                norm_cfg=dict(type='LN', eps=1e-6)),
-                        ],
-                        ffn_cfgs=dict(
-                            type='FFNWithNorm',
-                            embed_dims=768,
-                            feedforward_channels=768 * 4,
-                            num_fcs=2,
-                            act_cfg=dict(type='GELU'),
-                            dropout_layer=dict(
-                                type='DropPath', drop_prob=dpr[i]),
-                            norm_cfg=dict(type='LN', eps=1e-6)),
-                        operation_order=('self_attn', 'ffn'))
-                    for i in range(6)
-                ],
-                    num_layers=6),
+        transformer_layers=None,
         attention_type='decomposed_space_time',
+        extra_kwargs=dict(in_proj=False),
         norm_cfg=dict(type='LN', eps=1e-6)),
     cls_head=dict(type='TimeSformerHead', num_classes=174, in_channels=768),
     # model training and testing settings
