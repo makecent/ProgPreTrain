@@ -1,27 +1,83 @@
+import torch
+import numpy as np
+
 from mmaction.models.builder import LOCALIZERS, build_backbone, build_head
-from mmaction.models.localizers.base import BaseTAGClassifier
+from mmaction.models.localizers import BaseTAGClassifier
+from mmaction.core import top_k_accuracy
+
+
+def decode_progression(reg_score):
+    num_stage = reg_score.shape[-1]
+    if isinstance(reg_score, torch.Tensor):
+        progression = torch.count_nonzero(reg_score > 0.5, dim=-1)
+    elif isinstance(reg_score, np.ndarray):
+        progression = np.count_nonzero(reg_score > 0.5, axis=-1)
+    else:
+        raise TypeError(f"unsupported reg_score type: {type(reg_score)}")
+    progression = progression * 100 / num_stage
+    return progression
+
+
+def progression_mae(reg_score, progression_label):
+    progression = decode_progression(reg_score)
+    progression_label = decode_progression(progression_label)
+    if isinstance(reg_score, torch.Tensor):
+        mae = torch.abs(progression - progression_label)
+    elif isinstance(reg_score, np.ndarray):
+        mae = np.abs(progression - progression_label)
+    else:
+        raise TypeError(f"unsupported reg_score type: {type(reg_score)}")
+    return mae.mean()
+
+
+def binary_accuracy(pred, label):
+    acc = np.count_nonzero((pred > 0.5) == label) / label.size
+    return acc
 
 
 @LOCALIZERS.register_module()
 class APN(BaseTAGClassifier):
     """APN model framework."""
 
+    def __init__(self,
+                 backbone,
+                 cls_head):
+        super(BaseTAGClassifier, self).__init__()
+        self.backbone = build_backbone(backbone)
+        self.cls_head = build_head(cls_head)
+        self.init_weights()
+
     def _forward(self, imgs):
-        # [N, num_clips, C, T, H, W] -> [N*num_clips, C, T, H, W], which make clips training parallely (For TSN).
-        # For 2D backbone, there is no 'T' dimension. For our APN, num_clips is always equal to 1.
+        # [N, 1, C, T, H, W] -> [N, C, T, H, W]
         imgs = imgs.reshape((-1,) + imgs.shape[2:])
+
         x = self.extract_feat(imgs)
         output = self.cls_head(x)
 
         return output
 
-    def forward_train(self, imgs, prog_labels=None):
-        output = self._forward(imgs)
-        losses = {'loss': self.cls_head.loss(output, prog_labels)}
+    def forward_train(self, imgs, progression_label=None, class_label=None):
+        cls_score, reg_score = self._forward(imgs)
+        losses = {'loss_cls': self.cls_head.loss_cls(cls_score, class_label.squeeze(-1)),
+                  'loss_reg': self.cls_head.loss_reg(reg_score, progression_label)}
+
+        cls_acc = top_k_accuracy(cls_score.detach().cpu().numpy(),
+                                 class_label.detach().cpu().numpy(),
+                                 topk=(1,))
+        reg_score = reg_score.sigmoid()
+        reg_acc = binary_accuracy(reg_score.detach().cpu().numpy(), progression_label.detach().cpu().numpy())
+        reg_mae = progression_mae(reg_score.detach().cpu().numpy(), progression_label.detach().cpu().numpy())
+        losses[f'cls_acc'] = torch.tensor(cls_acc, device=cls_score.device)
+        losses[f'reg_acc'] = torch.tensor(reg_acc, device=reg_score.device)
+        losses[f'reg_mae'] = torch.tensor(reg_mae, device=reg_score.device)
+
         return losses
 
-    def forward_test(self, imgs, prog_labels):
-        output = self._forward(imgs)
-        progs = self.cls_head.decode_output(output)
-        mae = (progs - prog_labels.squeeze()).abs()
-        return mae.cpu().numpy()
+    def forward_test(self, imgs, progression_label):
+        """Defines the computation performed at every call when evaluation and testing."""
+        cls_score, reg_score = self._forward(imgs)
+        cls_score = cls_score.softmax(dim=-1)
+        reg_score = reg_score.sigmoid()
+        reg_mae = progression_mae(reg_score, progression_label)
+        return list(zip(cls_score.cpu().numpy(), reg_mae.cpu().numpy()))
+

@@ -1,16 +1,234 @@
-unexpected key in source state_dict: transformer_layers.layers.6.attentions.0.attn.in_proj_weight, transformer_layers.layers.6.attentions.0.attn.in_proj_bias, transformer_layers.layers.6.attentions.0.attn.out_proj.weight, transformer_layers.layers.6.attentions.0.attn.out_proj.bias, transformer_layers.layers.6.ffns.0.layers.0.0.weight, transformer_layers.layers.6.ffns.0.layers.0.0.bias, transformer_layer
-s.layers.6.ffns.0.layers.1.weight, transformer_layers.layers.6.ffns.0.layers.1.bias, transformer_layers.layers.7.attentions.0.attn.in_proj_weight, transformer_layers.layers.7.attentions.0.attn.in_proj_bias, transformer_layers.layers.7.attentions.0.attn.out_proj.weight, transformer_layers.layers.7.attentions.0.attn.out_proj.bias, transformer_layers.layers.7.ffns.0.layers.0.0.weight, transformer_layers.la
-yers.7.ffns.0.layers.0.0.bias, transformer_layers.layers.7.ffns.0.layers.1.weight, transformer_layers.layers.7.ffns.0.layers.1.bias, transformer_layers.layers.8.attentions.0.attn.in_proj_weight, transformer_layers.layers.8.attentions.0.attn.in_proj_bias, transformer_layers.layers.8.attentions.0.attn.out_proj.weight, transformer_layers.layers.8.attentions.0.attn.out_proj.bias, transformer_layers.layers.8
-.ffns.0.layers.0.0.weight, transformer_layers.layers.8.ffns.0.layers.0.0.bias, transformer_layers.layers.8.ffns.0.layers.1.weight, transformer_layers.layers.8.ffns.0.layers.1.bias, transformer_layers.layers.9.attentions.0.attn.in_proj_weight, transformer_layers.layers.9.attentions.0.attn.in_proj_bias, transformer_layers.layers.9.attentions.0.attn.out_proj.weight, transformer_layers.layers.9.attentions.0
-.attn.out_proj.bias, transformer_layers.layers.9.ffns.0.layers.0.0.weight, transformer_layers.layers.9.ffns.0.layers.0.0.bias, transformer_layers.layers.9.ffns.0.layers.1.weight, transformer_layers.layers.9.ffns.0.layers.1.bias, transformer_layers.layers.10.attentions.0.attn.in_proj_weight, transformer_layers.layers.10.attentions.0.attn.in_proj_bias, transformer_layers.layers.10.attentions.0.attn.out_pr
-oj.weight, transformer_layers.layers.10.attentions.0.attn.out_proj.bias, transformer_layers.layers.10.ffns.0.layers.0.0.weight, transformer_layers.layers.10.ffns.0.layers.0.0.bias, transformer_layers.layers.10.ffns.0.layers.1.weight, transformer_layers.layers.10.ffns.0.layers.1.bias, transformer_layers.layers.11.attentions.0.attn.in_proj_weight, transformer_layers.layers.11.attentions.0.attn.in_proj_bia
-s, transformer_layers.layers.11.attentions.0.attn.out_proj.weight, transformer_layers.layers.11.attentions.0.attn.out_proj.bias, transformer_layers.layers.11.ffns.0.layers.0.0.weight, transformer_layers.layers.11.ffns.0.layers.0.0.bias, transformer_layers.layers.11.ffns.0.layers.1.weight, transformer_layers.layers.11.ffns.0.layers.1.bias, transformer_layers.layers.6.attentions.0.norm.weight, transformer
-_layers.layers.6.attentions.0.norm.bias, transformer_layers.layers.6.ffns.0.norm.weight, transformer_layers.layers.6.ffns.0.norm.bias, transformer_layers.layers.7.attentions.0.norm.weight, transformer_layers.layers.7.attentions.0.norm.bias, transformer_layers.layers.7.ffns.0.norm.weight, transformer_layers.layers.7.ffns.0.norm.bias, transformer_layers.layers.8.attentions.0.norm.weight, transformer_layer
-s.layers.8.attentions.0.norm.bias, transformer_layers.layers.8.ffns.0.norm.weight, transformer_layers.layers.8.ffns.0.norm.bias, transformer_layers.layers.9.attentions.0.norm.weight, transformer_layers.layers.9.attentions.0.norm.bias, transformer_layers.layers.9.ffns.0.norm.weight, transformer_layers.layers.9.ffns.0.norm.bias, transformer_layers.layers.10.attentions.0.norm.weight, transformer_layers.lay
-ers.10.attentions.0.norm.bias, transformer_layers.layers.10.ffns.0.norm.weight, transformer_layers.layers.10.ffns.0.norm.bias, transformer_layers.layers.11.attentions.0.norm.weight, transformer_layers.layers.11.attentions.0.norm.bias, transformer_layers.layers.11.ffns.0.norm.weight, transformer_layers.layers.11.ffns.0.norm.bias, transformer_layers.layers.6.attentions.1.attn.in_proj_weight, transformer_l
-ayers.layers.6.attentions.1.attn.in_proj_bias, transformer_layers.layers.6.attentions.1.attn.out_proj.weight, transformer_layers.layers.6.attentions.1.attn.out_proj.bias, transformer_layers.layers.7.attentions.1.attn.in_proj_weight, transformer_layers.layers.7.attentions.1.attn.in_proj_bias, transformer_layers.layers.7.attentions.1.attn.out_proj.weight, transformer_layers.layers.7.attentions.1.attn.out_
-proj.bias, transformer_layers.layers.8.attentions.1.attn.in_proj_weight, transformer_layers.layers.8.attentions.1.attn.in_proj_bias, transformer_layers.layers.8.attentions.1.attn.out_proj.weight, transformer_layers.layers.8.attentions.1.attn.out_proj.bias, transformer_layers.layers.9.attentions.1.attn.in_proj_weight, transformer_layers.layers.9.attentions.1.attn.in_proj_bias, transformer_layers.layers.9
-.attentions.1.attn.out_proj.weight, transformer_layers.layers.9.attentions.1.attn.out_proj.bias, transformer_layers.layers.10.attentions.1.attn.in_proj_weight, transformer_layers.layers.10.attentions.1.attn.in_proj_bias, transformer_layers.layers.10.attentions.1.attn.out_proj.weight, transformer_layers.layers.10.attentions.1.attn.out_proj.bias, transformer_layers.layers.11.attentions.1.attn.in_proj_weig
-ht, transformer_layers.layers.11.attentions.1.attn.in_proj_bias, transformer_layers.layers.11.attentions.1.attn.out_proj.weight, transformer_layers.layers.11.attentions.1.attn.out_proj.bias, transformer_layers.layers.6.attentions.1.norm.weight, transformer_layers.layers.6.attentions.1.norm.bias, transformer_layers.layers.7.attentions.1.norm.weight, transformer_layers.layers.7.attentions.1.norm.bias, tra
-nsformer_layers.layers.8.attentions.1.norm.weight, transformer_layers.layers.8.attentions.1.norm.bias, transformer_layers.layers.9.attentions.1.norm.weight, transformer_layers.layers.9.attentions.1.norm.bias, transformer_layers.layers.10.attentions.1.norm.weight, transformer_layers.layers.10.attentions.1.norm.bias, transformer_layers.layers.11.attentions.1.norm.weight, transformer_layers.layers.11.atten
-tions.1.norm.bias
+/home/louis/miniconda3/envs/open-mmlab/bin/python /home/louis/PycharmProjects/ProgPreTrain/scratch.py
+| module                                                               | #parameters or shape   | #flops      |
+|:---------------------------------------------------------------------|:-----------------------|:------------|
+| model                                                                | 61.005M                | 98.492G     |
+|  cls_token                                                           |  (1, 1, 768)           |             |
+|  pos_embed                                                           |  (1, 197, 768)         |             |
+|  time_embed                                                          |  (1, 8, 768)           |             |
+|  patch_embed.projection                                              |  0.591M                |  0.925G     |
+|   patch_embed.projection.weight                                      |   (768, 3, 16, 16)     |             |
+|   patch_embed.projection.bias                                        |   (768,)               |             |
+|  norm                                                                |  1.536K                |  6.025M     |
+|   norm.weight                                                        |   (768,)               |             |
+|   norm.bias                                                          |   (768,)               |             |
+|  transformer_layers.layers                                           |  60.254M               |  97.561G    |
+|   transformer_layers.layers.0                                        |   10.042M              |   16.26G    |
+|    transformer_layers.layers.0.attentions                            |    5.318M              |    8.851G   |
+|     transformer_layers.layers.0.attentions.0                         |     2.954M             |     4.65G   |
+|      transformer_layers.layers.0.attentions.0.norm                   |      1.536K            |      6.021M |
+|       transformer_layers.layers.0.attentions.0.norm.weight           |       (768,)           |             |
+|       transformer_layers.layers.0.attentions.0.norm.bias             |       (768,)           |             |
+|      transformer_layers.layers.0.attentions.0.attn                   |      2.362M            |      3.719G |
+|       transformer_layers.layers.0.attentions.0.attn.in_proj_weight   |       (2304, 768)      |             |
+|       transformer_layers.layers.0.attentions.0.attn.in_proj_bias     |       (2304,)          |             |
+|       transformer_layers.layers.0.attentions.0.attn.out_proj         |       0.591M           |             |
+|        transformer_layers.layers.0.attentions.0.attn.out_proj.weight |        (768, 768)      |             |
+|        transformer_layers.layers.0.attentions.0.attn.out_proj.bias   |        (768,)          |             |
+|      transformer_layers.layers.0.attentions.0.temporal_fc            |      0.591M            |      0.925G |
+|       transformer_layers.layers.0.attentions.0.temporal_fc.weight    |       (768, 768)       |             |
+|       transformer_layers.layers.0.attentions.0.temporal_fc.bias      |       (768,)           |             |
+|     transformer_layers.layers.0.attentions.1                         |     2.364M             |     4.201G  |
+|      transformer_layers.layers.0.attentions.1.norm                   |      1.536K            |      6.052M |
+|       transformer_layers.layers.0.attentions.1.norm.weight           |       (768,)           |             |
+|       transformer_layers.layers.0.attentions.1.norm.bias             |       (768,)           |             |
+|      transformer_layers.layers.0.attentions.1.attn                   |      2.362M            |      4.195G |
+|       transformer_layers.layers.0.attentions.1.attn.in_proj_weight   |       (2304, 768)      |             |
+|       transformer_layers.layers.0.attentions.1.attn.in_proj_bias     |       (2304,)          |             |
+|       transformer_layers.layers.0.attentions.1.attn.out_proj         |       0.591M           |             |
+|        transformer_layers.layers.0.attentions.1.attn.out_proj.weight |        (768, 768)      |             |
+|        transformer_layers.layers.0.attentions.1.attn.out_proj.bias   |        (768,)          |             |
+|    transformer_layers.layers.0.ffns.0                                |    4.724M              |    7.409G   |
+|     transformer_layers.layers.0.ffns.0.layers                        |     4.722M             |     7.403G  |
+|      transformer_layers.layers.0.ffns.0.layers.0.0                   |      2.362M            |      3.702G |
+|       transformer_layers.layers.0.ffns.0.layers.0.0.weight           |       (3072, 768)      |             |
+|       transformer_layers.layers.0.ffns.0.layers.0.0.bias             |       (3072,)          |             |
+|      transformer_layers.layers.0.ffns.0.layers.1                     |      2.36M             |      3.702G |
+|       transformer_layers.layers.0.ffns.0.layers.1.weight             |       (768, 3072)      |             |
+|       transformer_layers.layers.0.ffns.0.layers.1.bias               |       (768,)           |             |
+|     transformer_layers.layers.0.ffns.0.norm                          |     1.536K             |     6.025M  |
+|      transformer_layers.layers.0.ffns.0.norm.weight                  |      (768,)            |             |
+|      transformer_layers.layers.0.ffns.0.norm.bias                    |      (768,)            |             |
+|   transformer_layers.layers.1                                        |   10.042M              |   16.26G    |
+|    transformer_layers.layers.1.attentions                            |    5.318M              |    8.851G   |
+|     transformer_layers.layers.1.attentions.0                         |     2.954M             |     4.65G   |
+|      transformer_layers.layers.1.attentions.0.norm                   |      1.536K            |      6.021M |
+|       transformer_layers.layers.1.attentions.0.norm.weight           |       (768,)           |             |
+|       transformer_layers.layers.1.attentions.0.norm.bias             |       (768,)           |             |
+|      transformer_layers.layers.1.attentions.0.attn                   |      2.362M            |      3.719G |
+|       transformer_layers.layers.1.attentions.0.attn.in_proj_weight   |       (2304, 768)      |             |
+|       transformer_layers.layers.1.attentions.0.attn.in_proj_bias     |       (2304,)          |             |
+|       transformer_layers.layers.1.attentions.0.attn.out_proj         |       0.591M           |             |
+|        transformer_layers.layers.1.attentions.0.attn.out_proj.weight |        (768, 768)      |             |
+|        transformer_layers.layers.1.attentions.0.attn.out_proj.bias   |        (768,)          |             |
+|      transformer_layers.layers.1.attentions.0.temporal_fc            |      0.591M            |      0.925G |
+|       transformer_layers.layers.1.attentions.0.temporal_fc.weight    |       (768, 768)       |             |
+|       transformer_layers.layers.1.attentions.0.temporal_fc.bias      |       (768,)           |             |
+|     transformer_layers.layers.1.attentions.1                         |     2.364M             |     4.201G  |
+|      transformer_layers.layers.1.attentions.1.norm                   |      1.536K            |      6.052M |
+|       transformer_layers.layers.1.attentions.1.norm.weight           |       (768,)           |             |
+|       transformer_layers.layers.1.attentions.1.norm.bias             |       (768,)           |             |
+|      transformer_layers.layers.1.attentions.1.attn                   |      2.362M            |      4.195G |
+|       transformer_layers.layers.1.attentions.1.attn.in_proj_weight   |       (2304, 768)      |             |
+|       transformer_layers.layers.1.attentions.1.attn.in_proj_bias     |       (2304,)          |             |
+|       transformer_layers.layers.1.attentions.1.attn.out_proj         |       0.591M           |             |
+|        transformer_layers.layers.1.attentions.1.attn.out_proj.weight |        (768, 768)      |             |
+|        transformer_layers.layers.1.attentions.1.attn.out_proj.bias   |        (768,)          |             |
+|    transformer_layers.layers.1.ffns.0                                |    4.724M              |    7.409G   |
+|     transformer_layers.layers.1.ffns.0.layers                        |     4.722M             |     7.403G  |
+|      transformer_layers.layers.1.ffns.0.layers.0.0                   |      2.362M            |      3.702G |
+|       transformer_layers.layers.1.ffns.0.layers.0.0.weight           |       (3072, 768)      |             |
+|       transformer_layers.layers.1.ffns.0.layers.0.0.bias             |       (3072,)          |             |
+|      transformer_layers.layers.1.ffns.0.layers.1                     |      2.36M             |      3.702G |
+|       transformer_layers.layers.1.ffns.0.layers.1.weight             |       (768, 3072)      |             |
+|       transformer_layers.layers.1.ffns.0.layers.1.bias               |       (768,)           |             |
+|     transformer_layers.layers.1.ffns.0.norm                          |     1.536K             |     6.025M  |
+|      transformer_layers.layers.1.ffns.0.norm.weight                  |      (768,)            |             |
+|      transformer_layers.layers.1.ffns.0.norm.bias                    |      (768,)            |             |
+|   transformer_layers.layers.2                                        |   10.042M              |   16.26G    |
+|    transformer_layers.layers.2.attentions                            |    5.318M              |    8.851G   |
+|     transformer_layers.layers.2.attentions.0                         |     2.954M             |     4.65G   |
+|      transformer_layers.layers.2.attentions.0.norm                   |      1.536K            |      6.021M |
+|       transformer_layers.layers.2.attentions.0.norm.weight           |       (768,)           |             |
+|       transformer_layers.layers.2.attentions.0.norm.bias             |       (768,)           |             |
+|      transformer_layers.layers.2.attentions.0.attn                   |      2.362M            |      3.719G |
+|       transformer_layers.layers.2.attentions.0.attn.in_proj_weight   |       (2304, 768)      |             |
+|       transformer_layers.layers.2.attentions.0.attn.in_proj_bias     |       (2304,)          |             |
+|       transformer_layers.layers.2.attentions.0.attn.out_proj         |       0.591M           |             |
+|        transformer_layers.layers.2.attentions.0.attn.out_proj.weight |        (768, 768)      |             |
+|        transformer_layers.layers.2.attentions.0.attn.out_proj.bias   |        (768,)          |             |
+|      transformer_layers.layers.2.attentions.0.temporal_fc            |      0.591M            |      0.925G |
+|       transformer_layers.layers.2.attentions.0.temporal_fc.weight    |       (768, 768)       |             |
+|       transformer_layers.layers.2.attentions.0.temporal_fc.bias      |       (768,)           |             |
+|     transformer_layers.layers.2.attentions.1                         |     2.364M             |     4.201G  |
+|      transformer_layers.layers.2.attentions.1.norm                   |      1.536K            |      6.052M |
+|       transformer_layers.layers.2.attentions.1.norm.weight           |       (768,)           |             |
+|       transformer_layers.layers.2.attentions.1.norm.bias             |       (768,)           |             |
+|      transformer_layers.layers.2.attentions.1.attn                   |      2.362M            |      4.195G |
+|       transformer_layers.layers.2.attentions.1.attn.in_proj_weight   |       (2304, 768)      |             |
+|       transformer_layers.layers.2.attentions.1.attn.in_proj_bias     |       (2304,)          |             |
+|       transformer_layers.layers.2.attentions.1.attn.out_proj         |       0.591M           |             |
+|        transformer_layers.layers.2.attentions.1.attn.out_proj.weight |        (768, 768)      |             |
+|        transformer_layers.layers.2.attentions.1.attn.out_proj.bias   |        (768,)          |             |
+|    transformer_layers.layers.2.ffns.0                                |    4.724M              |    7.409G   |
+|     transformer_layers.layers.2.ffns.0.layers                        |     4.722M             |     7.403G  |
+|      transformer_layers.layers.2.ffns.0.layers.0.0                   |      2.362M            |      3.702G |
+|       transformer_layers.layers.2.ffns.0.layers.0.0.weight           |       (3072, 768)      |             |
+|       transformer_layers.layers.2.ffns.0.layers.0.0.bias             |       (3072,)          |             |
+|      transformer_layers.layers.2.ffns.0.layers.1                     |      2.36M             |      3.702G |
+|       transformer_layers.layers.2.ffns.0.layers.1.weight             |       (768, 3072)      |             |
+|       transformer_layers.layers.2.ffns.0.layers.1.bias               |       (768,)           |             |
+|     transformer_layers.layers.2.ffns.0.norm                          |     1.536K             |     6.025M  |
+|      transformer_layers.layers.2.ffns.0.norm.weight                  |      (768,)            |             |
+|      transformer_layers.layers.2.ffns.0.norm.bias                    |      (768,)            |             |
+|   transformer_layers.layers.3                                        |   10.042M              |   16.26G    |
+|    transformer_layers.layers.3.attentions                            |    5.318M              |    8.851G   |
+|     transformer_layers.layers.3.attentions.0                         |     2.954M             |     4.65G   |
+|      transformer_layers.layers.3.attentions.0.norm                   |      1.536K            |      6.021M |
+|       transformer_layers.layers.3.attentions.0.norm.weight           |       (768,)           |             |
+|       transformer_layers.layers.3.attentions.0.norm.bias             |       (768,)           |             |
+|      transformer_layers.layers.3.attentions.0.attn                   |      2.362M            |      3.719G |
+|       transformer_layers.layers.3.attentions.0.attn.in_proj_weight   |       (2304, 768)      |             |
+|       transformer_layers.layers.3.attentions.0.attn.in_proj_bias     |       (2304,)          |             |
+|       transformer_layers.layers.3.attentions.0.attn.out_proj         |       0.591M           |             |
+|        transformer_layers.layers.3.attentions.0.attn.out_proj.weight |        (768, 768)      |             |
+|        transformer_layers.layers.3.attentions.0.attn.out_proj.bias   |        (768,)          |             |
+|      transformer_layers.layers.3.attentions.0.temporal_fc            |      0.591M            |      0.925G |
+|       transformer_layers.layers.3.attentions.0.temporal_fc.weight    |       (768, 768)       |             |
+|       transformer_layers.layers.3.attentions.0.temporal_fc.bias      |       (768,)           |             |
+|     transformer_layers.layers.3.attentions.1                         |     2.364M             |     4.201G  |
+|      transformer_layers.layers.3.attentions.1.norm                   |      1.536K            |      6.052M |
+|       transformer_layers.layers.3.attentions.1.norm.weight           |       (768,)           |             |
+|       transformer_layers.layers.3.attentions.1.norm.bias             |       (768,)           |             |
+|      transformer_layers.layers.3.attentions.1.attn                   |      2.362M            |      4.195G |
+|       transformer_layers.layers.3.attentions.1.attn.in_proj_weight   |       (2304, 768)      |             |
+|       transformer_layers.layers.3.attentions.1.attn.in_proj_bias     |       (2304,)          |             |
+|       transformer_layers.layers.3.attentions.1.attn.out_proj         |       0.591M           |             |
+|        transformer_layers.layers.3.attentions.1.attn.out_proj.weight |        (768, 768)      |             |
+|        transformer_layers.layers.3.attentions.1.attn.out_proj.bias   |        (768,)          |             |
+|    transformer_layers.layers.3.ffns.0                                |    4.724M              |    7.409G   |
+|     transformer_layers.layers.3.ffns.0.layers                        |     4.722M             |     7.403G  |
+|      transformer_layers.layers.3.ffns.0.layers.0.0                   |      2.362M            |      3.702G |
+|       transformer_layers.layers.3.ffns.0.layers.0.0.weight           |       (3072, 768)      |             |
+|       transformer_layers.layers.3.ffns.0.layers.0.0.bias             |       (3072,)          |             |
+|      transformer_layers.layers.3.ffns.0.layers.1                     |      2.36M             |      3.702G |
+|       transformer_layers.layers.3.ffns.0.layers.1.weight             |       (768, 3072)      |             |
+|       transformer_layers.layers.3.ffns.0.layers.1.bias               |       (768,)           |             |
+|     transformer_layers.layers.3.ffns.0.norm                          |     1.536K             |     6.025M  |
+|      transformer_layers.layers.3.ffns.0.norm.weight                  |      (768,)            |             |
+|      transformer_layers.layers.3.ffns.0.norm.bias                    |      (768,)            |             |
+|   transformer_layers.layers.4                                        |   10.042M              |   16.26G    |
+|    transformer_layers.layers.4.attentions                            |    5.318M              |    8.851G   |
+|     transformer_layers.layers.4.attentions.0                         |     2.954M             |     4.65G   |
+|      transformer_layers.layers.4.attentions.0.norm                   |      1.536K            |      6.021M |
+|       transformer_layers.layers.4.attentions.0.norm.weight           |       (768,)           |             |
+|       transformer_layers.layers.4.attentions.0.norm.bias             |       (768,)           |             |
+|      transformer_layers.layers.4.attentions.0.attn                   |      2.362M            |      3.719G |
+|       transformer_layers.layers.4.attentions.0.attn.in_proj_weight   |       (2304, 768)      |             |
+|       transformer_layers.layers.4.attentions.0.attn.in_proj_bias     |       (2304,)          |             |
+|       transformer_layers.layers.4.attentions.0.attn.out_proj         |       0.591M           |             |
+|        transformer_layers.layers.4.attentions.0.attn.out_proj.weight |        (768, 768)      |             |
+|        transformer_layers.layers.4.attentions.0.attn.out_proj.bias   |        (768,)          |             |
+|      transformer_layers.layers.4.attentions.0.temporal_fc            |      0.591M            |      0.925G |
+|       transformer_layers.layers.4.attentions.0.temporal_fc.weight    |       (768, 768)       |             |
+|       transformer_layers.layers.4.attentions.0.temporal_fc.bias      |       (768,)           |             |
+|     transformer_layers.layers.4.attentions.1                         |     2.364M             |     4.201G  |
+|      transformer_layers.layers.4.attentions.1.norm                   |      1.536K            |      6.052M |
+|       transformer_layers.layers.4.attentions.1.norm.weight           |       (768,)           |             |
+|       transformer_layers.layers.4.attentions.1.norm.bias             |       (768,)           |             |
+|      transformer_layers.layers.4.attentions.1.attn                   |      2.362M            |      4.195G |
+|       transformer_layers.layers.4.attentions.1.attn.in_proj_weight   |       (2304, 768)      |             |
+|       transformer_layers.layers.4.attentions.1.attn.in_proj_bias     |       (2304,)          |             |
+|       transformer_layers.layers.4.attentions.1.attn.out_proj         |       0.591M           |             |
+|        transformer_layers.layers.4.attentions.1.attn.out_proj.weight |        (768, 768)      |             |
+|        transformer_layers.layers.4.attentions.1.attn.out_proj.bias   |        (768,)          |             |
+|    transformer_layers.layers.4.ffns.0                                |    4.724M              |    7.409G   |
+|     transformer_layers.layers.4.ffns.0.layers                        |     4.722M             |     7.403G  |
+|      transformer_layers.layers.4.ffns.0.layers.0.0                   |      2.362M            |      3.702G |
+|       transformer_layers.layers.4.ffns.0.layers.0.0.weight           |       (3072, 768)      |             |
+|       transformer_layers.layers.4.ffns.0.layers.0.0.bias             |       (3072,)          |             |
+|      transformer_layers.layers.4.ffns.0.layers.1                     |      2.36M             |      3.702G |
+|       transformer_layers.layers.4.ffns.0.layers.1.weight             |       (768, 3072)      |             |
+|       transformer_layers.layers.4.ffns.0.layers.1.bias               |       (768,)           |             |
+|     transformer_layers.layers.4.ffns.0.norm                          |     1.536K             |     6.025M  |
+|      transformer_layers.layers.4.ffns.0.norm.weight                  |      (768,)            |             |
+|      transformer_layers.layers.4.ffns.0.norm.bias                    |      (768,)            |             |
+|   transformer_layers.layers.5                                        |   10.042M              |   16.26G    |
+|    transformer_layers.layers.5.attentions                            |    5.318M              |    8.851G   |
+|     transformer_layers.layers.5.attentions.0                         |     2.954M             |     4.65G   |
+|      transformer_layers.layers.5.attentions.0.norm                   |      1.536K            |      6.021M |
+|       transformer_layers.layers.5.attentions.0.norm.weight           |       (768,)           |             |
+|       transformer_layers.layers.5.attentions.0.norm.bias             |       (768,)           |             |
+|      transformer_layers.layers.5.attentions.0.attn                   |      2.362M            |      3.719G |
+|       transformer_layers.layers.5.attentions.0.attn.in_proj_weight   |       (2304, 768)      |             |
+|       transformer_layers.layers.5.attentions.0.attn.in_proj_bias     |       (2304,)          |             |
+|       transformer_layers.layers.5.attentions.0.attn.out_proj         |       0.591M           |             |
+|        transformer_layers.layers.5.attentions.0.attn.out_proj.weight |        (768, 768)      |             |
+|        transformer_layers.layers.5.attentions.0.attn.out_proj.bias   |        (768,)          |             |
+|      transformer_layers.layers.5.attentions.0.temporal_fc            |      0.591M            |      0.925G |
+|       transformer_layers.layers.5.attentions.0.temporal_fc.weight    |       (768, 768)       |             |
+|       transformer_layers.layers.5.attentions.0.temporal_fc.bias      |       (768,)           |             |
+|     transformer_layers.layers.5.attentions.1                         |     2.364M             |     4.201G  |
+|      transformer_layers.layers.5.attentions.1.norm                   |      1.536K            |      6.052M |
+|       transformer_layers.layers.5.attentions.1.norm.weight           |       (768,)           |             |
+|       transformer_layers.layers.5.attentions.1.norm.bias             |       (768,)           |             |
+|      transformer_layers.layers.5.attentions.1.attn                   |      2.362M            |      4.195G |
+|       transformer_layers.layers.5.attentions.1.attn.in_proj_weight   |       (2304, 768)      |             |
+|       transformer_layers.layers.5.attentions.1.attn.in_proj_bias     |       (2304,)          |             |
+|       transformer_layers.layers.5.attentions.1.attn.out_proj         |       0.591M           |             |
+|        transformer_layers.layers.5.attentions.1.attn.out_proj.weight |        (768, 768)      |             |
+|        transformer_layers.layers.5.attentions.1.attn.out_proj.bias   |        (768,)          |             |
+|    transformer_layers.layers.5.ffns.0                                |    4.724M              |    7.409G   |
+|     transformer_layers.layers.5.ffns.0.layers                        |     4.722M             |     7.403G  |
+|      transformer_layers.layers.5.ffns.0.layers.0.0                   |      2.362M            |      3.702G |
+|       transformer_layers.layers.5.ffns.0.layers.0.0.weight           |       (3072, 768)      |             |
+|       transformer_layers.layers.5.ffns.0.layers.0.0.bias             |       (3072,)          |             |
+|      transformer_layers.layers.5.ffns.0.layers.1                     |      2.36M             |      3.702G |
+|       transformer_layers.layers.5.ffns.0.layers.1.weight             |       (768, 3072)      |             |
+|       transformer_layers.layers.5.ffns.0.layers.1.bias               |       (768,)           |             |
+|     transformer_layers.layers.5.ffns.0.norm                          |     1.536K             |     6.025M  |
+|      transformer_layers.layers.5.ffns.0.norm.weight                  |      (768,)            |             |
+|      transformer_layers.layers.5.ffns.0.norm.bias                    |      (768,)            |             |
+GFLOPS:	98.49 G
+Params:	61.00 M
+
+Process finished with exit code 0

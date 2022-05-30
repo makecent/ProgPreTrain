@@ -20,7 +20,7 @@ class ProgLabel:
         if self.ordinal:
             ordinal_label = np.full(self.num_stages, fill_value=0.0, dtype='float32')
             ordinal_label[:prog_label] = 1.0
-        results['prog_labels'] = ordinal_label if self.ordinal else float(prog_label)
+        results['prog_labels'] = ordinal_label if self.ordinal else float(prog_label) / self.num_stages * 100
         return results
 
 

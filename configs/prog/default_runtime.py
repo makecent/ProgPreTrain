@@ -1,9 +1,9 @@
 # imports
-custom_imports = dict(imports=['my_models', 'my_dataloaders'], allow_failed_imports=False)
+custom_imports = dict(imports=['custom_modules'], allow_failed_imports=False)
 
 # others
 checkpoint_config = dict(interval=5)
-log_config = dict(interval=1, hooks=[dict(type='TensorboardLoggerHook'), dict(type='TextLoggerHook')])
+log_config = dict(interval=20, hooks=[dict(type='TensorboardLoggerHook'), dict(type='TextLoggerHook')])
 
 # runtime settings
 dist_params = dict(backend='nccl')
