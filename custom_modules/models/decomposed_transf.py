@@ -81,9 +81,10 @@ class DecomposedAttentionWithNorm(BaseModule):
 
     def init_weights(self):
         xavier_uniform_(self.block_in.weight)
-        xavier_uniform_(self.in_proj.weight)
         constant_(self.block_in.bias, 0.)
-        constant_(self.in_proj.bias, 0.)
+        if not isinstance(self.in_proj, nn.Identity):
+            xavier_uniform_(self.in_proj.weight)
+            constant_(self.in_proj.bias, 0.)
 
     def forward(self, x, *args, **kwargs):
         identity = x
@@ -116,7 +117,7 @@ class DecomposedAttentionWithNorm(BaseModule):
         x = in_proj(norm(x))
         x = rearrange(x, '(b p) t (i h c) -> i (b p) h t c', p=p, t=t + 1, i=3, h=h, c=c)
 
-        q, k, v = x
+        q, k, v = x if x.size(0) == 3 else (x[0], x[0], x[0])
         attn = (q @ k.transpose(-1, -2)) * self.scale
         attn = attn.softmax(dim=-1)
         attn = drop_out(attn)
@@ -153,7 +154,7 @@ class DecomposedAttentionWithNorm(BaseModule):
         x = in_proj(norm(x))
         x = rearrange(x, '(b t) p (i h c) -> i (b t) h p c', t=t, h=h, c=c)
 
-        q, k, v = x
+        q, k, v = x if x.size(0) == 3 else (x[0], x[0], x[0])
         attn = (q @ k.transpose(-1, -2)) * self.scale
         attn = attn.softmax(dim=-1)
         attn = drop_out(attn)
