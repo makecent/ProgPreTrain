@@ -109,13 +109,12 @@ class DecomposedAttentionWithNorm(BaseModule):
         return x
 
     def attention(self, x, mode, cls_attn, in_proj, norm, drop_out, drop_path, out_proj, proj_drop, residual, extra_fc=None):
-        cls_token = x[:, 0, :].unsqueeze(1)
-
         if residual:
             identity = x if cls_attn else x[:, 1:, :]
         else:
             identity = 0
 
+        cls_token = x[:, 0, :].unsqueeze(1)
         x = x[:, 1:, :]
 
         h, c = self.num_heads, self.head_dim
@@ -155,13 +154,14 @@ class DecomposedAttentionWithNorm(BaseModule):
         else:
             x = rearrange(x, '(b t) p m -> b (p t) m', p=p, t=t)
 
-        if extra_fc:
-            x = extra_fc(x)
-
         if cls_attn:
             x = torch.cat((cls_token, x), 1)
+            if extra_fc:
+                x = extra_fc(x)
             x += identity
         else:
+            if extra_fc:
+                x = extra_fc(x)
             x += identity
             x = torch.cat((cls_token, x), 1)
         return x
