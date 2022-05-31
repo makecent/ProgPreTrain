@@ -47,6 +47,9 @@ class DecomposedAttentionWithNorm(BaseModule):
                  mid_residual=True,
                  temporal_first=True,
                  init_cfg=None,
+                 temporal_cls_attn=True,
+                 spatial_cls_attn=True,
+                 mid_fc=False,
                  **kwargs):
         super().__init__(init_cfg)
         set_attributes(self, locals())
@@ -62,6 +65,9 @@ class DecomposedAttentionWithNorm(BaseModule):
         self.drop_out2 = nn.Dropout(attn_drop)
         self.proj_drop1 = nn.Dropout(proj_drop)
         self.proj_drop2 = nn.Dropout(proj_drop)
+        self.modes = ('temporal', 'spatial') if temporal_first else ('spatial', 'temporal')
+        cls_attn = (spatial_cls_attn, temporal_cls_attn)
+        self.cls_attn = cls_attn[::-1] if temporal_first else cls_attn
 
         self.block_in = nn.Linear(self.embed_dims, 3 * self.embed_dims)
         if self.out_proj:
@@ -75,7 +81,7 @@ class DecomposedAttentionWithNorm(BaseModule):
         self.block_out = nn.Linear(self.embed_dims, self.embed_dims)
 
         # used in TimeSformer, which I think is unnecessary because the MultiHeadAttention includes an OUT projection.
-        # self.temporal_fc = nn.Linear(self.embed_dims, self.embed_dims)
+        self.mid_fc = nn.Linear(self.embed_dims, self.embed_dims) if mid_fc else nn.Identity()
 
         self.init_weights()
 
@@ -85,90 +91,114 @@ class DecomposedAttentionWithNorm(BaseModule):
         if not isinstance(self.in_proj, nn.Identity):
             xavier_uniform_(self.in_proj.weight)
             constant_(self.in_proj.bias, 0.)
+        if not isinstance(self.mid_fc, nn.Identity):
+            constant_init(self.mid_fc, val=0, bias=0)
 
     def forward(self, x, *args, **kwargs):
-        identity = x
-        x = self.temporal_attention(x, in_proj=self.block_in, norm=self.norm1, drop_out=self.drop_out1,
-                                    drop_path=self.drop_path1, out_proj=self.out_proj, proj_drop=self.proj_drop1)
-        # x = self.temporal_fc(x)
-        x += identity
+        identity = x if not self.mid_residual else 0
+        x = self.attention(x, mode=self.modes[0], cls_attn=self.cls_attn[0],
+                           in_proj=self.block_in, norm=self.norm1, drop_out=self.drop_out1,
+                           drop_path=self.drop_path1, out_proj=self.out_proj, proj_drop=self.proj_drop1,
+                           residual=self.mid_residual, extra_fc=self.mid_fc)
 
-        identity = x
-        x = self.spatial_attention(x, in_proj=self.in_proj, norm=self.norm2, drop_out=self.drop_out2,
-                                   drop_path=self.drop_path2, out_proj=self.block_out, proj_drop=self.proj_drop2)
+        x = self.attention(x, mode=self.modes[1], cls_attn=self.cls_attn[1],
+                           in_proj=self.in_proj, norm=self.norm2, drop_out=self.drop_out2,
+                           drop_path=self.drop_path2, out_proj=self.block_out, proj_drop=self.proj_drop2,
+                           residual=self.mid_residual)
         x += identity
         return x
 
-    def temporal_attention(self, x, in_proj, norm, drop_out, drop_path, out_proj, proj_drop):
-        init_cls_token = x[:, 0, :].unsqueeze(1)
+    def attention(self, x, mode, cls_attn, in_proj, norm, drop_out, drop_path, out_proj, proj_drop, residual, extra_fc=None):
+        cls_token = x[:, 0, :].unsqueeze(1)
+
+        if residual:
+            identity = x if cls_attn else x[:, 1:, :]
+        else:
+            identity = 0
+
         x = x[:, 1:, :]
 
-        # query [batch_size, num_frames * num_patches, embed_dims]
         h, c = self.num_heads, self.head_dim
         b, tp, m = x.size()
         t, p = self.num_frames, tp // self.num_frames
 
-        cls_token = repeat(init_cls_token, 'b i m -> (b p) i m', i=1, p=p, m=m)
+        if mode == 'temporal':
+            x = rearrange(x, 'b (p t) m -> (b p) t m', p=p, t=t)
+            b1, n = p, t
+        else:
+            x = rearrange(x, 'b (p t) m -> (b t) p m', p=p, t=t)
+            b1, n = t, p
 
-        # query [batch_size * num_patches, num_frames + 1, embed_dims]
-        x = rearrange(x, 'b (p t) m -> (b p) t m', p=p, t=t)
-        x = torch.cat((cls_token, x), 1)
+        if cls_attn:
+            cls_token = repeat(cls_token, 'b i m -> (b b1) i m', b1=b1, i=1)
+            x = torch.cat((cls_token, x), 1)
 
         x = in_proj(norm(x))
-        x = rearrange(x, '(b p) t (i h c) -> i (b p) h t c', p=p, t=t + 1, i=3, h=h, c=c)
+        x = rearrange(x, '(b b1) n (i h c) -> i (b b1) h n c', b1=b1, i=3, h=h, c=c)
 
         q, k, v = x if x.size(0) == 3 else (x[0], x[0], x[0])
         attn = (q @ k.transpose(-1, -2)) * self.scale
         attn = attn.softmax(dim=-1)
         attn = drop_out(attn)
-        x = rearrange(attn @ v, '(b p) h t c -> (b p) t (h c)', p=p, t=t + 1, h=h, c=c)
+        x = rearrange(attn @ v, '(b b1) h n c -> (b b1) n (h c)', b1=b1)
 
         x = proj_drop(out_proj(x))
         x = drop_path(x.contiguous())
 
-        # cls_token [batch_size, 1, embed_dims]
-        cls_token = x[:, 0, :].reshape(b, p, m)
-        cls_token = torch.mean(cls_token, 1, True)
+        if cls_attn:
+            cls_token = x[:, 0, :].reshape(b, b1, m)
+            cls_token = torch.mean(cls_token, 1, True)
+            x = x[:, 1:, :]
 
-        # res_spatial [batch_size * num_patches, num_frames + 1, embed_dims]
-        x = rearrange(x[:, 1:, :], '(b p) t m -> b (p t) m', p=p)
-        x = torch.cat((cls_token, x), 1)
+        if mode == 'temporal':
+            x = rearrange(x, '(b p) t m -> b (p t) m', p=p, t=t)
+        else:
+            x = rearrange(x, '(b t) p m -> b (p t) m', p=p, t=t)
 
+        if extra_fc:
+            x = extra_fc(x)
+
+        if cls_attn:
+            x = torch.cat((cls_token, x), 1)
+            x += identity
+        else:
+            x += identity
+            x = torch.cat((cls_token, x), 1)
         return x
 
-    def spatial_attention(self, x, in_proj, norm, drop_out, drop_path, out_proj, proj_drop):
-        init_cls_token = x[:, 0, :].unsqueeze(1)
-        x = x[:, 1:, :]
-
-        # query [batch_size, num_frames * num_patches, embed_dims]
-        h, c = self.num_heads, self.head_dim
-        b, tp, m = x.size()
-        t, p = self.num_frames, tp // self.num_frames
-
-        cls_token = repeat(init_cls_token, 'b i m -> (b t) i m', t=t)
-
-        # query [batch_size * num_frames, num_patches + 1, embed_dims]
-        x = rearrange(x, 'b (p t) m -> (b t) p m', p=p, t=t)
-        x = torch.cat((cls_token, x), 1)
-
-        x = in_proj(norm(x))
-        x = rearrange(x, '(b t) p (i h c) -> i (b t) h p c', t=t, h=h, c=c)
-
-        q, k, v = x if x.size(0) == 3 else (x[0], x[0], x[0])
-        attn = (q @ k.transpose(-1, -2)) * self.scale
-        attn = attn.softmax(dim=-1)
-        attn = drop_out(attn)
-        x = rearrange(attn @ v, '(b t) h p c -> (b t) p (h c)', t=t)
-
-        x = proj_drop(out_proj(x))
-        x = drop_path(x.contiguous())
-
-        # cls_token [batch_size, 1, embed_dims]
-        cls_token = x[:, 0, :].reshape(b, t, m)
-        cls_token = torch.mean(cls_token, 1, True)
-
-        # res_spatial [batch_size * num_frames, num_patches + 1, embed_dims]
-        x = rearrange(x[:, 1:, :], '(b t) p m -> b (p t) m', t=t)
-        x = torch.cat((cls_token, x), 1)
-
-        return x
+    # def spatial_attention(self, x, in_proj, norm, drop_out, drop_path, out_proj, proj_drop):
+    #     init_cls_token = x[:, 0, :].unsqueeze(1)
+    #     x = x[:, 1:, :]
+    #
+    #     # query [batch_size, num_frames * num_patches, embed_dims]
+    #     h, c = self.num_heads, self.head_dim
+    #     b, tp, m = x.size()
+    #     t, p = self.num_frames, tp // self.num_frames
+    #
+    #     cls_token = repeat(init_cls_token, 'b i m -> (b t) i m', t=t)
+    #
+    #     # query [batch_size * num_frames, num_patches + 1, embed_dims]
+    #     x = rearrange(x, 'b (p t) m -> (b t) p m', p=p, t=t)
+    #     x = torch.cat((cls_token, x), 1)
+    #
+    #     x = in_proj(norm(x))
+    #     x = rearrange(x, '(b t) p (i h c) -> i (b t) h p c', t=t, h=h, c=c)
+    #
+    #     q, k, v = x if x.size(0) == 3 else (x[0], x[0], x[0])
+    #     attn = (q @ k.transpose(-1, -2)) * self.scale
+    #     attn = attn.softmax(dim=-1)
+    #     attn = drop_out(attn)
+    #     x = rearrange(attn @ v, '(b t) h p c -> (b t) p (h c)', t=t)
+    #
+    #     x = proj_drop(out_proj(x))
+    #     x = drop_path(x.contiguous())
+    #
+    #     # cls_token [batch_size, 1, embed_dims]
+    #     cls_token = x[:, 0, :].reshape(b, t, m)
+    #     cls_token = torch.mean(cls_token, 1, True)
+    #
+    #     # res_spatial [batch_size * num_frames, num_patches + 1, embed_dims]
+    #     x = rearrange(x[:, 1:, :], '(b t) p m -> b (p t) m', t=t)
+    #     x = torch.cat((cls_token, x), 1)
+    #
+    #     return x
