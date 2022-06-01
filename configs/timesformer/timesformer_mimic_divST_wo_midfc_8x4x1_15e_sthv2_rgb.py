@@ -16,7 +16,7 @@ model = dict(
         dropout_ratio=0.,
         transformer_layers=None,
         attention_type='decomposed_space_time',
-        extra_kwargs=dict(temporal_cls_attn=False, mid_fc=True),
+        extra_kwargs=dict(temporal_cls_attn=False, mid_fc=False),
         norm_cfg=dict(type='LN', eps=1e-6)),
     cls_head=dict(type='TimeSformerHead', num_classes=174, in_channels=768),
     # model training and testing settings
