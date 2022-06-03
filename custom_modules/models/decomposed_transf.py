@@ -133,7 +133,7 @@ class DecomposedAttentionWithNorm(BaseModule):
             x = torch.cat((cls_token, x), 1)
 
         x = in_proj(norm(x))
-        x = rearrange(x, '(b b1) n (i h c) -> i (b b1) h n c', b1=b1, i=3, h=h, c=c)
+        x = rearrange(x, '(b b1) n (i h c) -> i (b b1) h n c', b1=b1, h=h, c=c)
 
         q, k, v = x if x.size(0) == 3 else (x[0], x[0], x[0])
         attn = (q @ k.transpose(-1, -2)) * self.scale
