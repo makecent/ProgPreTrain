@@ -50,6 +50,7 @@ class DecomposedAttentionWithNorm(BaseModule):
                  temporal_cls_attn=True,
                  spatial_cls_attn=True,
                  mid_fc=False,
+                 parallel=False,
                  **kwargs):
         super().__init__(init_cfg)
         set_attributes(self, locals())
@@ -68,6 +69,8 @@ class DecomposedAttentionWithNorm(BaseModule):
         self.modes = ('temporal', 'spatial') if temporal_first else ('spatial', 'temporal')
         cls_attn = (spatial_cls_attn, temporal_cls_attn)
         self.cls_attn = cls_attn[::-1] if temporal_first else cls_attn
+        if self.parallel:
+            self.alpha = nn.Parameter(torch.tensor(1.0, dtype=torch.float), requires_grad=True)
 
         self.block_in = nn.Linear(self.embed_dims, 3 * self.embed_dims)
         if self.out_proj:
@@ -96,15 +99,24 @@ class DecomposedAttentionWithNorm(BaseModule):
 
     def forward(self, x, *args, **kwargs):
         identity = x if not self.mid_residual else 0
-        x = self.attention(x, mode=self.modes[0], cls_attn=self.cls_attn[0],
+
+        x2 = self.attention(x, mode=self.modes[0], cls_attn=self.cls_attn[0],
                            in_proj=self.block_in, norm=self.norm1, drop_out=self.drop_out1,
                            drop_path=self.drop_path1, out_proj=self.out_proj, proj_drop=self.proj_drop1,
                            residual=self.mid_residual, extra_fc=self.mid_fc)
-
-        x = self.attention(x, mode=self.modes[1], cls_attn=self.cls_attn[1],
+        if self.parallel:
+            x3 = x
+        else:
+            x3 = x2
+        x4 = self.attention(x3, mode=self.modes[1], cls_attn=self.cls_attn[1],
                            in_proj=self.in_proj, norm=self.norm2, drop_out=self.drop_out2,
                            drop_path=self.drop_path2, out_proj=self.block_out, proj_drop=self.proj_drop2,
                            residual=self.mid_residual)
+        if self.parallel:
+            alpha = self.alpha.sigmoid()
+            x = (1 - alpha) * x2 + alpha * x4
+        else:
+            x = x4
         x += identity
         return x
 
