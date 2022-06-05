@@ -23,7 +23,6 @@ def progression_mae(reg_score, progression_label):
     progression_label = decode_progression(progression_label)
     if isinstance(reg_score, torch.Tensor):
         mae = torch.abs(progression - progression_label)
-        print(mae.shape)
     elif isinstance(reg_score, np.ndarray):
         mae = np.abs(progression - progression_label)
     else:
