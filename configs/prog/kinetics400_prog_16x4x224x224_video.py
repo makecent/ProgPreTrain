@@ -1,5 +1,5 @@
 # dataset settings
-dataset_type = 'VideoDataset'
+dataset_type = 'CustomVideoDataset'
 data_root = 'my_data/kinetics400/videos_train'
 data_root_val = 'my_data/kinetics400/videos_val'
 ann_file_train = 'my_data/kinetics400/kinetics400_train_list_videos.txt'
