@@ -11,7 +11,7 @@ class CustomVideoDataset(VideoDataset):
             kwargs['metrics'].remove('MAE')
             logger = kwargs.get('logger', None)
             cls_score, reg_mae = list(zip(*results))
-            eval_results = super().evaluate(cls_score, **kwargs)
+            eval_results = super().evaluate(list(cls_score), **kwargs)
 
             msg = f'Evaluating MAE ...'
             if logger is None:
