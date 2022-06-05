@@ -41,10 +41,14 @@ class APN(BaseTAGClassifier):
 
     def __init__(self,
                  backbone,
-                 cls_head):
+                 cls_head,
+                 train_cfg=None,
+                 test_cfg=None):
         super(BaseTAGClassifier, self).__init__()
         self.backbone = build_backbone(backbone)
         self.cls_head = build_head(cls_head)
+        self.train_cfg = train_cfg
+        self.test_cfg = test_cfg
         self.init_weights()
 
     def _forward(self, imgs):
