@@ -40,7 +40,7 @@ val_pipeline = [
     dict(type='CenterCrop', crop_size=224),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
-    dict(type='Collect', keys=['imgs', 'prog_label', 'label'], meta_keys=[]),
+    dict(type='Collect', keys=['imgs', 'prog_label'], meta_keys=[]),
     dict(type='ToTensor', keys=['imgs', 'prog_label'])
 ]
 test_pipeline = [
@@ -57,7 +57,7 @@ test_pipeline = [
     dict(type='ThreeCrop', crop_size=256),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
-    dict(type='Collect', keys=['imgs', 'prog_label', 'label'], meta_keys=[]),
+    dict(type='Collect', keys=['imgs', 'prog_label'], meta_keys=[]),
     dict(type='ToTensor', keys=['imgs', 'prog_label'])
 ]
 data = dict(
