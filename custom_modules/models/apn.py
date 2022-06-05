@@ -82,7 +82,7 @@ class APN(BaseTAGClassifier):
         cls_score, reg_score = self._forward(imgs)
         cls_score = cls_score.softmax(dim=-1)
         reg_score = reg_score.sigmoid()
+        print(reg_score.shape, prog_label.shape)
         reg_mae = progression_mae(reg_score, prog_label)
-        print(cls_score.shape, reg_mae.shape)
         return list(zip(cls_score.cpu().numpy(), reg_mae.cpu().numpy()))
 
