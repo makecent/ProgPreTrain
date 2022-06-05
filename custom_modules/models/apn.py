@@ -20,16 +20,15 @@ def decode_progression(reg_score):
 
 def progression_mae(reg_score, progression_label):
     progression = decode_progression(reg_score)
-    print(progression.shape)
     progression_label = decode_progression(progression_label)
-    print(progression_label.shape)
     if isinstance(reg_score, torch.Tensor):
         mae = torch.abs(progression - progression_label)
+        print(mae.shape)
     elif isinstance(reg_score, np.ndarray):
         mae = np.abs(progression - progression_label)
     else:
         raise TypeError(f"unsupported reg_score type: {type(reg_score)}")
-    return mae.mean()
+    return mae
 
 
 def binary_accuracy(pred, label):
@@ -75,7 +74,7 @@ class APN(BaseTAGClassifier):
         reg_mae = progression_mae(reg_score.detach().cpu().numpy(), prog_label.detach().cpu().numpy())
         losses[f'cls_acc'] = torch.tensor(cls_acc, device=cls_score.device)
         losses[f'reg_acc'] = torch.tensor(reg_acc, device=reg_score.device)
-        losses[f'reg_mae'] = torch.tensor(reg_mae, device=reg_score.device)
+        losses[f'reg_mae'] = torch.tensor(reg_mae.mean(), device=reg_score.device)
 
         return losses
 
@@ -84,7 +83,6 @@ class APN(BaseTAGClassifier):
         cls_score, reg_score = self._forward(imgs)
         cls_score = cls_score.softmax(dim=-1)
         reg_score = reg_score.sigmoid()
-        print(reg_score.shape, prog_label.shape)
         reg_mae = progression_mae(reg_score, prog_label)
         return list(zip(cls_score.cpu().numpy(), reg_mae.cpu().numpy()))
 
