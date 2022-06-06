@@ -1,5 +1,6 @@
 _base_ = ['default_runtime.py']
-
+import torch
+torch.backends.cudnn.benchmark = True
 # model settings
 model = dict(
     type='Recognizer3D',
@@ -15,7 +16,8 @@ model = dict(
         in_channels=3,
         dropout_ratio=0.,
         transformer_layers=None,
-        attention_type='distillation',
+        # attention_type='distillation',
+        attention_type='joint_space_time',
         extra_kwargs=dict(distill_prob=0.),
         norm_cfg=dict(type='LN', eps=1e-6)),
     cls_head=dict(type='TimeSformerHead', num_classes=174, in_channels=768),
@@ -79,6 +81,7 @@ test_pipeline = [
 data = dict(
     videos_per_gpu=8,
     workers_per_gpu=6,
+    train_dataloader=dict(shuffle=False),
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=dataset_type,

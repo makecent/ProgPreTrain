@@ -71,8 +71,7 @@ class Distillation(BaseModule):
                 batch_first=True,
                 dropout_layer=dict(type='DropPath', drop_prob=dropout_layer)))
         norm_cfg = dict(type='LN', eps=1e-6)
-        self.joint_attn_norm1 = build_norm_layer(norm_cfg, self.embed_dims)[1]
-        self.joint_attn_norm2 = build_norm_layer(norm_cfg, self.embed_dims)[1]
+        self.joint_attn_norm = build_norm_layer(norm_cfg, self.embed_dims)[1]
         self.joint_attn = build_attention(joint_attn_cfg)
 
     def forward(self, x, *args, **kwargs):
@@ -80,7 +79,7 @@ class Distillation(BaseModule):
         if toss_coin:
             x = self.spatial_attn(self.temporal_attn(x, *args, **kwargs))
         else:
-            x = self.joint_attn_norm1(x)
-            x = self.joint_attn(x, *args, **kwargs)
-            x = self.joint_attn_norm2(x)
+            identity = x
+            x = self.joint_attn_norm(x)
+            x = self.joint_attn(x, x, x, identity=identity, **kwargs)
         return x
