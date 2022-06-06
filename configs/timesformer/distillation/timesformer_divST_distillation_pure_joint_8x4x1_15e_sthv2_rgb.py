@@ -1,6 +1,5 @@
 _base_ = ['default_runtime.py']
-import torch
-torch.backends.cudnn.benchmark = True
+
 # model settings
 model = dict(
     type='Recognizer3D',
@@ -81,7 +80,6 @@ test_pipeline = [
 data = dict(
     videos_per_gpu=8,
     workers_per_gpu=6,
-    train_dataloader=dict(shuffle=False),
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=dataset_type,
