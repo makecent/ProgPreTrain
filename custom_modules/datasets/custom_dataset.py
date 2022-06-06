@@ -10,17 +10,18 @@ class CustomVideoDataset(VideoDataset):
         if 'MAE' in kwargs.get('metrics', []):
             kwargs['metrics'].remove('MAE')
             logger = kwargs.get('logger', None)
-            eval_results = VideoDataset.evaluate(results, **kwargs)
+            cls_score, reg_mae = list(zip(*results))
+            eval_results = super().evaluate(list(cls_score), **kwargs)
 
             msg = f'Evaluating MAE ...'
             if logger is None:
                 msg = '\n' + msg
             print_log(msg, logger=logger)
 
-            MAE = np.array(results).mean()
+            MAE = np.array(reg_mae).mean()
             eval_results[f'MAE'] = MAE
             print_log(f'\nMAE\t{MAE:.2f}', logger=logger)
         else:
-            eval_results = VideoDataset.evaluate(results, **kwargs)
+            eval_results = super().evaluate(results, **kwargs)
 
         return eval_results

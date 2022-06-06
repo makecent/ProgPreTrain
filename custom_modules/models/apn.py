@@ -27,7 +27,7 @@ def progression_mae(reg_score, progression_label):
         mae = np.abs(progression - progression_label)
     else:
         raise TypeError(f"unsupported reg_score type: {type(reg_score)}")
-    return mae.mean()
+    return mae
 
 
 def binary_accuracy(pred, label):
@@ -41,10 +41,14 @@ class APN(BaseTAGClassifier):
 
     def __init__(self,
                  backbone,
-                 cls_head):
+                 cls_head,
+                 train_cfg=None,
+                 test_cfg=None):
         super(BaseTAGClassifier, self).__init__()
         self.backbone = build_backbone(backbone)
         self.cls_head = build_head(cls_head)
+        self.train_cfg = train_cfg
+        self.test_cfg = test_cfg
         self.init_weights()
 
     def _forward(self, imgs):
@@ -56,28 +60,28 @@ class APN(BaseTAGClassifier):
 
         return output
 
-    def forward_train(self, imgs, progression_label=None, class_label=None):
+    def forward_train(self, imgs, prog_label=None, label=None):
         cls_score, reg_score = self._forward(imgs)
-        losses = {'loss_cls': self.cls_head.loss_cls(cls_score, class_label.squeeze(-1)),
-                  'loss_reg': self.cls_head.loss_reg(reg_score, progression_label)}
+        losses = {'loss_cls': self.cls_head.loss_cls(cls_score, label.squeeze(-1)),
+                  'loss_reg': self.cls_head.loss_reg(reg_score, prog_label)}
 
         cls_acc = top_k_accuracy(cls_score.detach().cpu().numpy(),
-                                 class_label.detach().cpu().numpy(),
+                                 label.detach().cpu().numpy(),
                                  topk=(1,))
         reg_score = reg_score.sigmoid()
-        reg_acc = binary_accuracy(reg_score.detach().cpu().numpy(), progression_label.detach().cpu().numpy())
-        reg_mae = progression_mae(reg_score.detach().cpu().numpy(), progression_label.detach().cpu().numpy())
+        reg_acc = binary_accuracy(reg_score.detach().cpu().numpy(), prog_label.detach().cpu().numpy())
+        reg_mae = progression_mae(reg_score.detach().cpu().numpy(), prog_label.detach().cpu().numpy())
         losses[f'cls_acc'] = torch.tensor(cls_acc, device=cls_score.device)
         losses[f'reg_acc'] = torch.tensor(reg_acc, device=reg_score.device)
-        losses[f'reg_mae'] = torch.tensor(reg_mae, device=reg_score.device)
+        losses[f'reg_mae'] = torch.tensor(reg_mae.mean(), device=reg_score.device)
 
         return losses
 
-    def forward_test(self, imgs, progression_label):
+    def forward_test(self, imgs, prog_label):
         """Defines the computation performed at every call when evaluation and testing."""
         cls_score, reg_score = self._forward(imgs)
         cls_score = cls_score.softmax(dim=-1)
         reg_score = reg_score.sigmoid()
-        reg_mae = progression_mae(reg_score, progression_label)
+        reg_mae = progression_mae(reg_score, prog_label)
         return list(zip(cls_score.cpu().numpy(), reg_mae.cpu().numpy()))
 

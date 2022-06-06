@@ -1,5 +1,5 @@
 # dataset settings
-dataset_type = 'VideoDataset'
+dataset_type = 'CustomVideoDataset'
 data_root = 'my_data/kinetics400/videos_train'
 data_root_val = 'my_data/kinetics400/videos_val'
 ann_file_train = 'my_data/kinetics400/kinetics400_train_list_videos.txt'
@@ -23,8 +23,8 @@ train_pipeline = [
     dict(type='Flip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
-    dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
-    dict(type='ToTensor', keys=['imgs', 'label'])
+    dict(type='Collect', keys=['imgs', 'prog_label', 'label'], meta_keys=[]),
+    dict(type='ToTensor', keys=['imgs', 'prog_label', 'label'])
 ]
 val_pipeline = [
     dict(type='DecordInit'),
@@ -34,13 +34,14 @@ val_pipeline = [
         frame_interval=4,
         num_clips=1,
         test_mode=True),
+    dict(type='ProgLabel', num_stages=10, ordinal=True),
     dict(type='DecordDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='CenterCrop', crop_size=224),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
-    dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
-    dict(type='ToTensor', keys=['imgs'])
+    dict(type='Collect', keys=['imgs', 'prog_label'], meta_keys=[]),
+    dict(type='ToTensor', keys=['imgs', 'prog_label'])
 ]
 test_pipeline = [
     dict(type='DecordInit'),
@@ -50,13 +51,14 @@ test_pipeline = [
         frame_interval=4,
         num_clips=10,
         test_mode=True),
+    dict(type='ProgLabel', num_stages=10, ordinal=True),
     dict(type='DecordDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='ThreeCrop', crop_size=256),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
-    dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
-    dict(type='ToTensor', keys=['imgs'])
+    dict(type='Collect', keys=['imgs', 'prog_label'], meta_keys=[]),
+    dict(type='ToTensor', keys=['imgs', 'prog_label'])
 ]
 data = dict(
     videos_per_gpu=8,
