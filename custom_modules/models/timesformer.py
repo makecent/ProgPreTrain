@@ -36,10 +36,10 @@ class PatchEmbed(nn.Module):
         self.patch_size = _pair(patch_size)
 
         num_patches = (self.img_size[1] // self.patch_size[1]) * (
-            self.img_size[0] // self.patch_size[0])
+                self.img_size[0] // self.patch_size[0])
         assert num_patches * self.patch_size[0] * self.patch_size[1] == \
                self.img_size[0] * self.img_size[1], \
-               'The image size H*W must be divisible by patch size'
+            'The image size H*W must be divisible by patch size'
         self.num_patches = num_patches
 
         # Use conv layer to embed
@@ -90,7 +90,7 @@ class TimeSformer(nn.Module):
             `dict(type='LN', eps=1e-6)`.
     """
     supported_attention_types = [
-        'divided_space_time', 'space_only', 'joint_space_time', 'divided_space', 'decomposed_space_time'
+        'divided_space_time', 'space_only', 'joint_space_time', 'divided_space', 'decomposed_space_time', 'distillation'
     ]
 
     def __init__(self,
@@ -230,6 +230,31 @@ class TimeSformer(nn.Module):
                         operation_order=('self_attn', 'ffn'))
                     for i in range(num_transformer_layers)
                 ]
+            elif self.attention_type == 'distillation':
+                _transformerlayers_cfg = [
+                    dict(
+                        type='BaseTransformerLayer',
+                        attn_cfgs=[
+                            dict(
+                                type='Distillation',
+                                embed_dims=embed_dims,
+                                num_heads=num_heads,
+                                num_frames=num_frames,
+                                dropout_layer=dpr[i],
+                                **extra_kwargs)
+                        ],
+                        ffn_cfgs=dict(
+                            type='FFNWithNorm',
+                            embed_dims=embed_dims,
+                            feedforward_channels=embed_dims * 4,
+                            num_fcs=2,
+                            act_cfg=dict(type='GELU'),
+                            dropout_layer=dict(
+                                type='DropPath', drop_prob=dpr[i]),
+                            norm_cfg=dict(type='LN', eps=1e-6)),
+                        operation_order=('self_attn', 'ffn'))
+                    for i in range(num_transformer_layers)
+                ]
             else:
                 # Sapce Only & Joint Space Time
                 _transformerlayers_cfg = [
@@ -335,6 +360,39 @@ class TimeSformer(nn.Module):
                                                   'in_proj')
                         new_key = new_key.replace('block_out',
                                                   'out_proj')
+                        state_dict[new_key] = state_dict[old_key].clone()
+
+            if self.attention_type == 'distillation':
+                # modify the key names of norm layers
+                old_state_dict_keys = list(state_dict.keys())
+                for old_key in old_state_dict_keys:
+                    if 'norms' in old_key:
+                        new_key = old_key.replace('norms.0',
+                                                  'attentions.0.spatial_attn.norm')
+                        new_key = new_key.replace('norms.1', 'ffns.0.norm')
+                        state_dict[new_key] = state_dict.pop(old_key)
+                    if 'attn' in old_key:
+                        new_key = old_key.replace('attn', 'spatial_attn.attn')
+                        state_dict[new_key] = state_dict.pop(old_key)
+
+                # copy the parameters of space attention to time attention
+                old_state_dict_keys = list(state_dict.keys())
+                for old_key in old_state_dict_keys:
+                    if 'spatial_attn' in old_key:
+                        new_key = old_key.replace('spatial_attn.norm',
+                                                  'joint_attn_norm1')
+                        state_dict[new_key] = state_dict[old_key].clone()
+                        new_key = old_key.replace('spatial_attn.norm',
+                                                  'temporal_attn.norm')
+                        state_dict[new_key] = state_dict[old_key].clone()
+                        new_key = old_key.replace('spatial_attn.attn',
+                                                  'temporal_attn.attn')
+                        state_dict[new_key] = state_dict[old_key].clone()
+                        new_key = old_key.replace('spatial_attn.attn',
+                                                  'joint_attn.attn')
+                        state_dict[new_key] = state_dict[old_key].clone()
+                    if 'ffns' in old_key:
+                        new_key = old_key.replace('ffns.0.norm', 'attentions.0.joint_attn_norm2')
                         state_dict[new_key] = state_dict[old_key].clone()
 
             load_state_dict(self, state_dict, strict=False, logger=logger)

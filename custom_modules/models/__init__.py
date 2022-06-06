@@ -9,6 +9,7 @@ from .swin_2d import SwinTransformer3D
 from .swin_2plus1d import SwinTransformer3D
 from .timesformer import TimeSformer
 from .decomposed_transf import DecomposedAttentionWithNorm
+from .distillation_divST import Distillation
 
 __all__ = [
     'apn', 'apn_head', 'MViTHead', "MultiscaleVisionTransformers", "SwinTransformer3D"
