@@ -13,10 +13,69 @@ from torch.nn import MultiheadAttention
 
 from mmcv import ConfigDict
 from mmcv.cnn.bricks.transformer import build_transformer_layer, build_attention
+from mmaction.models import RECOGNIZERS, Recognizer3D, BaseRecognizer, build_recognizer, build_loss
+
+
+@RECOGNIZERS.register_module()
+class ModelWiseDistillation(Recognizer3D, BaseRecognizer):
+
+    def __init__(self,
+                 model1,
+                 model2,
+                 train_cfg=None,
+                 test_cfg=None):
+        # record the source of the backbone
+        super(BaseRecognizer, self).__init__()
+        self.model1 = build_recognizer(model1)
+        self.model2 = build_recognizer(model2)
+        self.kd_loss = build_loss(dict(type='KLLoss'))
+
+        self.train_cfg = train_cfg
+        self.test_cfg = test_cfg
+        self.init_weights()
+
+        self.fp16_enabled = False
+
+    def forward_train(self, imgs, labels, **kwargs):
+        """Defines the computation performed at every call when training."""
+
+        imgs = imgs.reshape((-1,) + imgs.shape[2:])
+        losses = dict()
+
+        cls_logit1 = self.model1(imgs)
+        cls_logit2 = self.model2(imgs)
+
+        gt_labels = labels.squeeze()
+        loss_cls1 = self.model1.cls_head.loss(cls_logit1, gt_labels, **kwargs)
+        loss_cls1['loss_cls1'] = loss_cls1.pop('loss_cls')
+        loss_cls1['loss_cls1'] = loss_cls1.pop('loss_cls')
+        loss_cls2 = self.model2.cls_head.loss(cls_logit2, gt_labels, **kwargs)
+        ensemble = torch.stack([cls_logit1 - cls_logit1.gather(1, gt_labels[:, None]),
+                                cls_logit2 - cls_logit2.gather(1, gt_labels[:, None])]).min(dim=0).values.softmax(dim=-1)
+        loss_kd1 = self.kd_loss(cls_logit1.softmax(dim=-1), ensemble, **kwargs)
+        loss_kd2 = self.kd_loss(cls_logit2.softmax(dim=-1), ensemble, **kwargs)
+
+        losses.update(loss_cls1)
+        losses.update(loss_cls2)
+        losses.update(dict(loss_kd1))
+        losses.update(loss_kd2)
+
+        return losses
+
+    def forward_test(self, imgs):
+        """Defines the computation performed at every call when evaluation and
+        testing."""
+        num_segs = imgs.shape[1]
+        imgs = imgs.reshape((-1,) + imgs.shape[2:])
+
+        feat = self.extract_feat(imgs)
+        cls_score = self.cls_head(feat)
+        cls_score = self.average_clip(cls_score, num_segs)
+        return cls_score.cpu().numpy()
 
 
 @ATTENTION.register_module()
-class Distillation(BaseModule):
+class BlockWiseDistillation(BaseModule):
     """Temporal Attention in Divided Space Time Attention.
     Args:
         embed_dims (int): Dimensions of embedding.
