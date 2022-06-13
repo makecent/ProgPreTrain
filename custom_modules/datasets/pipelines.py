@@ -9,7 +9,7 @@ from mmaction.datasets.pipelines.augmentations import _init_lazy_if_proper
 class ProgLabel:
 
     def __init__(self,
-                 num_stages=100,
+                 num_stages=10,
                  ordinal=False):
         self.num_stages = num_stages
         self.ordinal = ordinal

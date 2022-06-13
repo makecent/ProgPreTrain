@@ -380,7 +380,10 @@ class TimeSformer(nn.Module):
                 for old_key in old_state_dict_keys:
                     if 'spatial_attn' in old_key:
                         new_key = old_key.replace('spatial_attn.norm',
-                                                  'joint_attn_norm1')
+                                                  'joint_attn_norm')
+                        state_dict[new_key] = state_dict[old_key].clone()
+                        new_key = old_key.replace('spatial_attn.attn',
+                                                  'joint_attn.attn')
                         state_dict[new_key] = state_dict[old_key].clone()
                         new_key = old_key.replace('spatial_attn.norm',
                                                   'temporal_attn.norm')
@@ -388,12 +391,7 @@ class TimeSformer(nn.Module):
                         new_key = old_key.replace('spatial_attn.attn',
                                                   'temporal_attn.attn')
                         state_dict[new_key] = state_dict[old_key].clone()
-                        new_key = old_key.replace('spatial_attn.attn',
-                                                  'joint_attn.attn')
-                        state_dict[new_key] = state_dict[old_key].clone()
-                    if 'ffns' in old_key:
-                        new_key = old_key.replace('ffns.0.norm', 'attentions.0.joint_attn_norm2')
-                        state_dict[new_key] = state_dict[old_key].clone()
+
 
             load_state_dict(self, state_dict, strict=False, logger=logger)
 
