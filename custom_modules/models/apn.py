@@ -71,7 +71,7 @@ class APN(BaseTAGClassifier):
         reg_score = reg_score.sigmoid()
         reg_acc = binary_accuracy(reg_score.detach().cpu().numpy(), prog_label.detach().cpu().numpy())
         reg_mae = progression_mae(reg_score.detach().cpu().numpy(), prog_label.detach().cpu().numpy())
-        losses[f'cls_acc'] = torch.tensor(cls_acc, device=cls_score.device)
+        losses[f'top1_acc'] = torch.tensor(cls_acc, device=cls_score.device)
         losses[f'reg_acc'] = torch.tensor(reg_acc, device=reg_score.device)
         losses[f'reg_mae'] = torch.tensor(reg_mae.mean(), device=reg_score.device)
 
