@@ -17,13 +17,14 @@ model = dict(
         zero_init_residual=False),
     cls_head=dict(
         type='APNHead',
+        num_stages=100,
         num_classes=400,
         in_channels=2048,
         dropout_ratio=0.5,
         init_std=0.01),
     # model training and testing settings
     train_cfg=None,
-    test_cfg=dict(average_clips='prob'))
+    test_cfg=dict(average_clips='score'))
 
 log_config = dict(interval=2000)
 data = dict(videos_per_gpu=16)

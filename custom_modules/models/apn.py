@@ -1,4 +1,5 @@
 import torch
+from torch.nn import functional as F
 import numpy as np
 
 from mmaction.models.builder import LOCALIZERS, build_backbone, build_head
@@ -52,7 +53,7 @@ class APN(BaseTAGClassifier):
         self.init_weights()
 
     def _forward(self, imgs):
-        # [N, 1, C, T, H, W] -> [N, C, T, H, W]
+        # [N, S, C, T, H, W] -> [N*S, C, T, H, W]
         imgs = imgs.reshape((-1,) + imgs.shape[2:])
 
         x = self.extract_feat(imgs)
@@ -80,8 +81,21 @@ class APN(BaseTAGClassifier):
     def forward_test(self, imgs, prog_label):
         """Defines the computation performed at every call when evaluation and testing."""
         cls_score, reg_score = self._forward(imgs)
-        cls_score = cls_score.softmax(dim=-1)
         reg_score = reg_score.sigmoid()
         reg_mae = progression_mae(reg_score, prog_label)
+
+        cls_score = self.average_clip(cls_score, num_segs=imgs.shape[1])
+        reg_mae = self.average_clip(reg_mae, num_segs=imgs.shape[1])
         return list(zip(cls_score.cpu().numpy(), reg_mae.cpu().numpy()))
 
+    def average_clip(self, cls_score, num_segs=1):
+        average_clips = self.test_cfg['average_clips']
+        batch_size = cls_score.shape[0]
+        cls_score = cls_score.view(batch_size // num_segs, num_segs, -1)
+
+        if average_clips == 'prob':
+            cls_score = F.softmax(cls_score, dim=2).mean(dim=1)
+        elif average_clips == 'score':
+            cls_score = cls_score.mean(dim=1)
+
+        return cls_score
