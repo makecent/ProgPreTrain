@@ -5,8 +5,7 @@ model = dict(
     type='Recognizer3D',
     backbone=dict(
         type='TimeSformer',
-        pretrained=  # noqa: E251
-        'https://download.openmmlab.com/mmaction/recognition/timesformer/vit_base_patch16_224.pth',  # noqa: E501
+        pretrained=None,
         num_transformer_layers=8,  # have similar FLOPs and Params with the divST of six layers.
         num_frames=8,
         img_size=224,

@@ -101,17 +101,17 @@ class DecomposedAttentionWithNorm(BaseModule):
         identity = x if not self.mid_residual else 0
 
         x2 = self.attention(x, mode=self.modes[0], cls_attn=self.cls_attn[0],
-                           in_proj=self.block_in, norm=self.norm1, drop_out=self.drop_out1,
-                           drop_path=self.drop_path1, out_proj=self.out_proj, proj_drop=self.proj_drop1,
-                           residual=self.mid_residual, extra_fc=self.mid_fc)
+                            in_proj=self.block_in, norm=self.norm1, drop_out=self.drop_out1,
+                            drop_path=self.drop_path1, out_proj=self.out_proj, proj_drop=self.proj_drop1,
+                            residual=self.mid_residual, extra_fc=self.mid_fc)
         if self.parallel:
             x3 = x
         else:
             x3 = x2
         x4 = self.attention(x3, mode=self.modes[1], cls_attn=self.cls_attn[1],
-                           in_proj=self.in_proj, norm=self.norm2, drop_out=self.drop_out2,
-                           drop_path=self.drop_path2, out_proj=self.block_out, proj_drop=self.proj_drop2,
-                           residual=self.mid_residual)
+                            in_proj=self.in_proj, norm=self.norm2, drop_out=self.drop_out2,
+                            drop_path=self.drop_path2, out_proj=self.block_out, proj_drop=self.proj_drop2,
+                            residual=self.mid_residual)
         if self.parallel:
             alpha = self.alpha.sigmoid()
             x = (1 - alpha) * x2 + alpha * x4
@@ -120,7 +120,8 @@ class DecomposedAttentionWithNorm(BaseModule):
         x += identity
         return x
 
-    def attention(self, x, mode, cls_attn, in_proj, norm, drop_out, drop_path, out_proj, proj_drop, residual, extra_fc=None):
+    def attention(self, x, mode, cls_attn, in_proj, norm, drop_out, drop_path, out_proj, proj_drop, residual,
+                  extra_fc=None):
         if residual:
             identity = x if cls_attn else x[:, 1:, :]
         else:
