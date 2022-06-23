@@ -57,7 +57,7 @@ class DecomposedAttentionWithNorm(BaseModule):
         self.head_dim = embed_dims // num_heads
         self.scale = self.head_dim ** -0.5
         self.norm1 = build_norm_layer(norm_cfg, self.embed_dims)[1]
-        self.norm2 = build_norm_layer(norm_cfg, self.embed_dims)[1]
+        self.norm2 = build_norm_layer(norm_cfg, self.embed_dims)[1] if mid_residual else nn.Identity()
         self.drop_path1 = build_dropout(
             dropout_layer) if dropout_layer else nn.Identity()
         self.drop_path2 = build_dropout(
