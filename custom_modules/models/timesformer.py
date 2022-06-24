@@ -130,10 +130,8 @@ class TimeSformer(nn.Module):
 
         # TODO: cls_token was removed
         # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims))
-        # self.pos_embed = nn.Parameter(
-        #     torch.zeros(1, num_patches + 1, embed_dims))
         self.pos_embed = nn.Parameter(
-            torch.zeros(1, num_patches, embed_dims))
+            torch.zeros(1, num_patches + 1, embed_dims))
         self.drop_after_pos = nn.Dropout(p=dropout_ratio)
         if self.attention_type != 'space_only':
             self.time_embed = nn.Parameter(
@@ -436,7 +434,8 @@ class TimeSformer(nn.Module):
         # TODO cls_tokens was removed
         # cls_tokens = self.cls_token.expand(x.size(0), -1, -1)
         # x = torch.cat((cls_tokens, x), dim=1)
-        x = x + self.pos_embed
+        # x = x + self.pos_embed
+        x = x + self.pos_embed[:, 1:]
         x = self.drop_after_pos(x)
         # Add Time Embedding
         if self.attention_type != 'space_only':
