@@ -238,7 +238,7 @@ class TimeSpaceAttention(nn.Module):
         constant_(self.in_proj_bias, 0.)
         constant_(self.out_proj.bias, 0.)
 
-    def forward(self, query):
+    def forward(self, query, *args, **kwargs):
         # cls_token = query[:, 0, :].unsqueeze(1)
         # query = query[:, 1:, :]
         tgt_len, bsz, embed_dim = query.shape
