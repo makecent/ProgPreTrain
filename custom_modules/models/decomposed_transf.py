@@ -248,8 +248,9 @@ class TimeSpaceAttention(nn.Module):
         v = v.contiguous().view(v.shape[0], bsz * self.num_heads, self.head_dim).transpose(0, 1)
 
         # Temporal attention
-        x = self.temporal_attention(q, k, v)
-        x = self.spatial_attention(x, x, x)
+        x1 = self.temporal_attention(q, k, v)
+        x2 = self.spatial_attention(q, k, v)
+        x = x1 + x2
         x = x.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         x = F.linear(x, self.out_proj.weight, self.out_proj.bias)
         return x
