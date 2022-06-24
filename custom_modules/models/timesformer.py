@@ -128,8 +128,7 @@ class TimeSformer(nn.Module):
             embed_dims=embed_dims)
         num_patches = self.patch_embed.num_patches
 
-        # TODO: cls_token was removed
-        # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims))
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims))
         self.pos_embed = nn.Parameter(
             torch.zeros(1, num_patches + 1, embed_dims))
         self.drop_after_pos = nn.Dropout(p=dropout_ratio)
@@ -324,8 +323,7 @@ class TimeSformer(nn.Module):
         """Initiate the parameters either from existing checkpoint or from
         scratch."""
         trunc_normal_(self.pos_embed, std=.02)
-        # TODO cls_token is removed
-        # trunc_normal_(self.cls_token, std=.02)
+        trunc_normal_(self.cls_token, std=.02)
 
         if pretrained:
             self.pretrained = pretrained
@@ -431,23 +429,19 @@ class TimeSformer(nn.Module):
         x = self.patch_embed(x)
 
         # x [batch_size * num_frames, num_patches + 1, embed_dims]
-        # TODO cls_tokens was removed
-        # cls_tokens = self.cls_token.expand(x.size(0), -1, -1)
-        # x = torch.cat((cls_tokens, x), dim=1)
-        # x = x + self.pos_embed
-        x = x + self.pos_embed[:, 1:]
+        cls_tokens = self.cls_token.expand(x.size(0), -1, -1)
+        x = torch.cat((cls_tokens, x), dim=1)
+        x = x + self.pos_embed
         x = self.drop_after_pos(x)
         # Add Time Embedding
         if self.attention_type != 'space_only':
             # x [batch_size, num_patches * num_frames + 1, embed_dims]
-            # TODO cls_tokens were removed
-            # cls_tokens = x[:batches, 0, :].unsqueeze(1)
-            # x = rearrange(x[:, 1:, :], '(b t) p m -> (b p) t m', b=batches)
-            x = rearrange(x, '(b t) p m -> (b p) t m', b=batches)
+            cls_tokens = x[:batches, 0, :].unsqueeze(1)
+            x = rearrange(x[:, 1:, :], '(b t) p m -> (b p) t m', b=batches)
             x = x + self.time_embed
             x = self.drop_after_time(x)
             x = rearrange(x, '(b p) t m -> b (p t) m', b=batches)
-            # x = torch.cat((cls_tokens, x), dim=1)
+            x = torch.cat((cls_tokens, x), dim=1)
 
         x = self.transformer_layers(x, None, None)
 
@@ -459,6 +453,4 @@ class TimeSformer(nn.Module):
         x = self.norm(x)
 
         # Return Class Token
-        # TODO: cls_tokens was removed
-        # return x[:, 0]
-        return x.mean(dim=1)
+        return x[:, 0]
