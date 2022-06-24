@@ -282,7 +282,7 @@ class TimeSpaceAttention(nn.Module):
         attn = attn.softmax(dim=-1)
         x = attn @ v
 
-        x = rearrange(x, '(bh t) s m -> bh (s t) d', bh=bh, t=t, s=s, d=d)
+        x = rearrange(x, '(bh t) s d -> bh (s t) d', bh=bh, t=t, s=s, d=d)
         return x
 
 
