@@ -90,7 +90,7 @@ class TimeSformer(nn.Module):
             `dict(type='LN', eps=1e-6)`.
     """
     supported_attention_types = [
-        'divided_space_time', 'space_only', 'joint_space_time', 'divided_space', 'decomposed_space_time', 'distillation'
+        'divided_space_time', 'space_only', 'joint_space_time', 'divided_space', 'decomposed_space_time', 'distillation', 'divST_single'
     ]
 
     def __init__(self,
