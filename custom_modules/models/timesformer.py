@@ -441,12 +441,14 @@ class TimeSformer(nn.Module):
         # Add Time Embedding
         if self.attention_type != 'space_only':
             # x [batch_size, num_patches * num_frames + 1, embed_dims]
-            cls_tokens = x[:batches, 0, :].unsqueeze(1)
-            x = rearrange(x[:, 1:, :], '(b t) p m -> (b p) t m', b=batches)
+            # TODO cls_tokens were removed
+            # cls_tokens = x[:batches, 0, :].unsqueeze(1)
+            # x = rearrange(x[:, 1:, :], '(b t) p m -> (b p) t m', b=batches)
+            x = rearrange(x, '(b t) p m -> (b p) t m', b=batches)
             x = x + self.time_embed
             x = self.drop_after_time(x)
             x = rearrange(x, '(b p) t m -> b (p t) m', b=batches)
-            x = torch.cat((cls_tokens, x), dim=1)
+            # x = torch.cat((cls_tokens, x), dim=1)
 
         x = self.transformer_layers(x, None, None)
 
