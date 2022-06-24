@@ -324,7 +324,8 @@ class TimeSformer(nn.Module):
         """Initiate the parameters either from existing checkpoint or from
         scratch."""
         trunc_normal_(self.pos_embed, std=.02)
-        trunc_normal_(self.cls_token, std=.02)
+        # TODO cls_token is removed
+        # trunc_normal_(self.cls_token, std=.02)
 
         if pretrained:
             self.pretrained = pretrained
