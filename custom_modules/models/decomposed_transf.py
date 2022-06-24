@@ -1,15 +1,17 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 import torch.nn as nn
+from torch.nn import functional as F
+from torch.nn.modules.linear import NonDynamicallyQuantizableLinear
 from einops import rearrange, repeat
 from mmcv.cnn import build_norm_layer, constant_init
 from mmcv.cnn.bricks.registry import ATTENTION, FEEDFORWARD_NETWORK
-from mmcv.cnn.bricks.transformer import FFN, build_dropout
+from mmcv.cnn.bricks.transformer import FFN, build_dropout, MultiheadAttention
 from mmcv.runner.base_module import BaseModule
+import warnings
 from mmcv.utils import digit_version
 from pytorchvideo.layers.utils import set_attributes
 from torch.nn.init import constant_, xavier_normal_, xavier_uniform_
-from torch.nn import MultiheadAttention
 
 
 @ATTENTION.register_module()
@@ -215,3 +217,136 @@ class DecomposedAttentionWithNorm(BaseModule):
     #     x = torch.cat((cls_token, x), 1)
     #
     #     return x
+
+
+class TimeSpaceAttention(nn.Module):
+    def __init__(self, embed_dims, num_heads, temporal_dim):
+        super(TimeSpaceAttention, self).__init__()
+        self.embed_dims = embed_dims
+        self.num_heads = num_heads
+        self.head_dim = embed_dims // num_heads
+        self.temporal_dim = temporal_dim
+        self.scale = self.head_dim ** -0.5
+
+        self.in_proj_weight = nn.Parameter(torch.empty((3 * embed_dims, embed_dims)))
+        self.in_proj_bias = nn.Parameter(torch.empty(3 * embed_dims))
+        self.out_proj = NonDynamicallyQuantizableLinear(embed_dims, embed_dims)
+        self._reset_parameters()
+
+    def _reset_parameters(self):
+        if self._qkv_same_embed_dim:
+            xavier_uniform_(self.in_proj_weight)
+        else:
+            xavier_uniform_(self.q_proj_weight)
+            xavier_uniform_(self.k_proj_weight)
+            xavier_uniform_(self.v_proj_weight)
+
+        if self.in_proj_bias is not None:
+            constant_(self.in_proj_bias, 0.)
+            constant_(self.out_proj.bias, 0.)
+        if self.bias_k is not None:
+            xavier_normal_(self.bias_k)
+        if self.bias_v is not None:
+            xavier_normal_(self.bias_v)
+
+    def forward(self, query):
+        # cls_token = query[:, 0, :].unsqueeze(1)
+        # query = query[:, 1:, :]
+        tgt_len, bsz, embed_dim = query.shape
+        q, k, v = F._in_projection_packed(query, query, query, self.in_proj_weight, self.in_proj_bias)
+        q = q.contiguous().view(tgt_len, bsz * self.num_heads, self.head_dim).transpose(0, 1)
+        k = k.contiguous().view(k.shape[0], bsz * self.num_heads, self.head_dim).transpose(0, 1)
+        v = v.contiguous().view(v.shape[0], bsz * self.num_heads, self.head_dim).transpose(0, 1)
+
+        # Temporal attention
+        x = self.temporal_attention(q, k, v)
+        x = self.spatial_attention(x, x, x)
+        x = x.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
+        x = F.linear(x, self.out_proj.weight, self.out_proj.bias)
+        return x
+
+    def temporal_attention(self, q, k, v):
+        bh, l, d = q.size()
+        t, s = self.temporal_dim, l // self.temporal_dim
+
+        q = rearrange(q, 'bh (s t) d -> (bh s) t d', bh=bh, s=s, t=t, d=d)
+        k = rearrange(k, 'bh (s t) d -> (bh s) t d', bh=bh, s=s, t=t, d=d)
+        v = rearrange(v, 'bh (s t) d -> (bh s) t d', bh=bh, s=s, t=t, d=d)
+
+        attn = (q @ k.transpose(-1, -2)) * self.scale
+        attn = attn.softmax(dim=-1)
+        x = attn @ v
+
+        x = rearrange(x, '(bh s) t d -> bh (s t) d', bh=bh, s=s, t=t, d=d)
+        return x
+
+    def spatial_attention(self, q, k, v):
+        bh, l, d = q.size()
+        t, s = self.temporal_dim, l // self.temporal_dim
+
+        q = rearrange(q, 'bh (s t) d -> (bh t) s d', bh=bh, s=s, t=t, d=d)
+        k = rearrange(k, 'bh (s t) d -> (bh t) s d', bh=bh, s=s, t=t, d=d)
+        v = rearrange(v, 'bh (s t) d -> (bh t) s d', bh=bh, s=s, t=t, d=d)
+
+        attn = (q @ k.transpose(-1, -2)) * self.scale
+        attn = attn.softmax(dim=-1)
+        x = attn @ v
+
+        x = rearrange(x, '(bh t) s m -> bh (s t) d', bh=bh, t=t, s=s, d=d)
+        return x
+
+
+@ATTENTION.register_module()
+class MultiheadTimeSpaceAttention(MultiheadAttention):
+    def __init__(self,
+                 *args,
+                 **kwargs):
+        super().__init__(*args, **kwargs)
+        self.attn = nn.MultiheadAttention(self.embed_dims, self.num_heads)
+
+    def forward(self,
+                query,
+                key=None,
+                value=None,
+                identity=None,
+                query_pos=None,
+                key_pos=None,
+                attn_mask=None,
+                key_padding_mask=None,
+                **kwargs):
+
+        if key is None:
+            key = query
+        if value is None:
+            value = key
+        if identity is None:
+            identity = query
+        if key_pos is None:
+            if query_pos is not None:
+                # use query_pos if key_pos is not available
+                if query_pos.shape == key.shape:
+                    key_pos = query_pos
+                else:
+                    warnings.warn(f'position encoding of key is'
+                                  f'missing in {self.__class__.__name__}.')
+        if query_pos is not None:
+            query = query + query_pos
+        if key_pos is not None:
+            key = key + key_pos
+
+        if self.batch_first:
+            query = query.transpose(0, 1)
+            key = key.transpose(0, 1)
+            value = value.transpose(0, 1)
+
+        out = self.attn(
+            query=query,
+            key=key,
+            value=value,
+            attn_mask=attn_mask,
+            key_padding_mask=key_padding_mask)
+
+        if self.batch_first:
+            out = out.transpose(0, 1)
+
+        return identity + self.dropout_layer(self.proj_drop(out))

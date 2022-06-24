@@ -255,6 +255,32 @@ class TimeSformer(nn.Module):
                         operation_order=('self_attn', 'ffn'))
                     for i in range(num_transformer_layers)
                 ]
+            elif self.attention_type == 'divST_single':
+                _transformerlayers_cfg = [
+                    dict(
+                        type='BaseTransformerLayer',
+                        attn_cfgs=[
+                            dict(
+                                type='MultiheadTimeSpaceAttention',
+                                embed_dims=embed_dims,
+                                num_heads=num_heads,
+                                batch_first=True,
+                                dropout_layer=dict(
+                                    type='DropPath', drop_prob=dpr[i]))
+                        ],
+                        ffn_cfgs=dict(
+                            type='FFN',
+                            embed_dims=embed_dims,
+                            feedforward_channels=embed_dims * 4,
+                            num_fcs=2,
+                            act_cfg=dict(type='GELU'),
+                            dropout_layer=dict(
+                                type='DropPath', drop_prob=dpr[i])),
+                        operation_order=('norm', 'self_attn', 'norm', 'ffn'),
+                        norm_cfg=dict(type='LN', eps=1e-6),
+                        batch_first=True)
+                    for i in range(num_transformer_layers)
+                ]
             else:
                 # Sapce Only & Joint Space Time
                 _transformerlayers_cfg = [
@@ -426,4 +452,6 @@ class TimeSformer(nn.Module):
         x = self.norm(x)
 
         # Return Class Token
-        return x[:, 0]
+        # TODO: change back
+        # return x[:, 0]
+        return x.mean(dim=1)
