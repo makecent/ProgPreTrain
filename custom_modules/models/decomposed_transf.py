@@ -299,10 +299,11 @@ class TimeSpaceAttention(nn.Module):
 @ATTENTION.register_module()
 class MultiheadTimeSpaceAttention(MultiheadAttention):
     def __init__(self,
+                 temporal_dim,
                  *args,
                  **kwargs):
         super().__init__(*args, **kwargs)
-        self.attn = nn.MultiheadAttention(self.embed_dims, self.num_heads)
+        self.attn = TimeSpaceAttention(self.embed_dims, self.num_heads, temporal_dim=temporal_dim)
 
     def forward(self,
                 query,

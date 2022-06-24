@@ -264,6 +264,7 @@ class TimeSformer(nn.Module):
                                 type='MultiheadTimeSpaceAttention',
                                 embed_dims=embed_dims,
                                 num_heads=num_heads,
+                                temporal_dim=num_frames,
                                 batch_first=True,
                                 dropout_layer=dict(
                                     type='DropPath', drop_prob=dpr[i]))
