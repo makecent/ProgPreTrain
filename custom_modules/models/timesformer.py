@@ -128,7 +128,8 @@ class TimeSformer(nn.Module):
             embed_dims=embed_dims)
         num_patches = self.patch_embed.num_patches
 
-        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims))
+        # TODO: cls_token was removed
+        # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims))
         self.pos_embed = nn.Parameter(
             torch.zeros(1, num_patches + 1, embed_dims))
         self.drop_after_pos = nn.Dropout(p=dropout_ratio)
@@ -429,8 +430,9 @@ class TimeSformer(nn.Module):
         x = self.patch_embed(x)
 
         # x [batch_size * num_frames, num_patches + 1, embed_dims]
-        cls_tokens = self.cls_token.expand(x.size(0), -1, -1)
-        x = torch.cat((cls_tokens, x), dim=1)
+        # TODO cls_tokens was removed
+        # cls_tokens = self.cls_token.expand(x.size(0), -1, -1)
+        # x = torch.cat((cls_tokens, x), dim=1)
         x = x + self.pos_embed
         x = self.drop_after_pos(x)
         # Add Time Embedding
@@ -453,6 +455,6 @@ class TimeSformer(nn.Module):
         x = self.norm(x)
 
         # Return Class Token
-        # TODO: change back
+        # TODO: cls_tokens was removed
         # return x[:, 0]
         return x.mean(dim=1)
