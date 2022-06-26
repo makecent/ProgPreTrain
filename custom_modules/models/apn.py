@@ -21,7 +21,8 @@ def decode_progression(reg_score):
 
 def progression_mae(reg_score, progression_label):
     progression = decode_progression(reg_score)
-    progression_label = decode_progression(progression_label)
+    if progression_label.ndim > 2:
+        progression_label = decode_progression(progression_label)
     if isinstance(reg_score, torch.Tensor):
         mae = torch.abs(progression - progression_label)
     elif isinstance(reg_score, np.ndarray):
@@ -82,7 +83,7 @@ class APN(BaseTAGClassifier):
         """Defines the computation performed at every call when evaluation and testing."""
         cls_score, reg_score = self._forward(imgs)
         reg_score = reg_score.sigmoid()
-        reg_mae = progression_mae(reg_score, prog_label)
+        reg_mae = progression_mae(reg_score, prog_label.flatten())
 
         cls_score = self.average_clip(cls_score, num_segs=imgs.shape[1])
         reg_mae = self.average_clip(reg_mae, num_segs=imgs.shape[1])

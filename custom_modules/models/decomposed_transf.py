@@ -238,11 +238,11 @@ class TimeSpaceAttention(nn.Module):
         constant_(self.in_proj_bias, 0.)
         constant_(self.out_proj.bias, 0.)
 
-    def forward(self, query, *args, **kwargs):
+    def forward(self, query, key, value, *args, **kwargs):
         # cls_token = query[:, 0, :].unsqueeze(1)
         # query = query[:, 1:, :]
         tgt_len, bsz, embed_dim = query.shape
-        q, k, v = F._in_projection_packed(query, query, query, self.in_proj_weight, self.in_proj_bias)
+        q, k, v = F._in_projection_packed(query, key, value, self.in_proj_weight, self.in_proj_bias)
         q = q.contiguous().view(tgt_len, bsz * self.num_heads, self.head_dim).transpose(0, 1)
         k = k.contiguous().view(k.shape[0], bsz * self.num_heads, self.head_dim).transpose(0, 1)
         v = v.contiguous().view(v.shape[0], bsz * self.num_heads, self.head_dim).transpose(0, 1)
@@ -253,7 +253,7 @@ class TimeSpaceAttention(nn.Module):
         x = x1 + x2
         x = x.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         x = F.linear(x, self.out_proj.weight, self.out_proj.bias)
-        return x
+        return x, None
 
     def temporal_attention(self, q, k, v):
         bh, l, d = q.size()
@@ -294,50 +294,3 @@ class MultiheadTimeSpaceAttention(MultiheadAttention):
                  **kwargs):
         super().__init__(*args, **kwargs)
         self.attn = TimeSpaceAttention(self.embed_dims, self.num_heads, temporal_dim=temporal_dim)
-
-    def forward(self,
-                query,
-                key=None,
-                value=None,
-                identity=None,
-                query_pos=None,
-                key_pos=None,
-                attn_mask=None,
-                key_padding_mask=None,
-                **kwargs):
-
-        if key is None:
-            key = query
-        if value is None:
-            value = key
-        if identity is None:
-            identity = query
-        if key_pos is None:
-            if query_pos is not None:
-                # use query_pos if key_pos is not available
-                if query_pos.shape == key.shape:
-                    key_pos = query_pos
-                else:
-                    warnings.warn(f'position encoding of key is'
-                                  f'missing in {self.__class__.__name__}.')
-        if query_pos is not None:
-            query = query + query_pos
-        if key_pos is not None:
-            key = key + key_pos
-
-        if self.batch_first:
-            query = query.transpose(0, 1)
-            key = key.transpose(0, 1)
-            value = value.transpose(0, 1)
-
-        out = self.attn(
-            query=query,
-            key=key,
-            value=value,
-            attn_mask=attn_mask,
-            key_padding_mask=key_padding_mask)
-
-        if self.batch_first:
-            out = out.transpose(0, 1)
-
-        return identity + self.dropout_layer(self.proj_drop(out))

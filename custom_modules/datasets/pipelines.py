@@ -15,12 +15,16 @@ class ProgLabel:
         self.ordinal = ordinal
 
     def __call__(self, results):
-        clip_center = results['frame_inds'].mean()
-        prog_label = round(clip_center / results['total_frames'] * self.num_stages)
+        clip_center = results['frame_inds'].reshape([results['num_clips'], results['clip_len']]).mean(axis=-1)
+        prog_label = np.rint(clip_center / results['total_frames'] * self.num_stages)
         if self.ordinal:
+            assert results['num_clips'] == 1
+            prog_label = prog_label.astype(int)[0]
             ordinal_label = np.full(self.num_stages, fill_value=0.0, dtype='float32')
             ordinal_label[:prog_label] = 1.0
-        results['prog_label'] = ordinal_label if self.ordinal else float(prog_label) / self.num_stages * 100
+            results['prog_label'] = ordinal_label
+        else:
+            results['prog_label'] = prog_label / self.num_stages * 100
         return results
 
 
@@ -43,7 +47,8 @@ class CenterLabel(ProgLabel):
 @PIPELINES.register_module(force=True)
 class ThreeCrop(_ThreeCrop):
     """
-    Support short-side center crop now
+    Support short-side center crop now;
+    Repeat progression label three times;
     """
     def __call__(self, results):
         _init_lazy_if_proper(results, False)
@@ -87,6 +92,8 @@ class ThreeCrop(_ThreeCrop):
         results['imgs'] = cropped
         results['crop_bbox'] = crop_bboxes
         results['img_shape'] = results['imgs'][0].shape[:2]
+        if 'prog_label' in results:
+            results['prog_label'] = np.repeat(results['prog_label'], 3)
 
         return results
 
