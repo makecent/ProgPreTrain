@@ -1,4 +1,4 @@
-_base_ = ["./default_runtime.py", "./kinetics400_prog_16x4x224x224_video.py"]
+_base_ = ["./default_runtime.py", "./kinetics400_prog100_16x4x224x224_video.py"]
 
 # model settings
 model = dict(
@@ -17,7 +17,7 @@ model = dict(
         zero_init_residual=False),
     cls_head=dict(
         type='APNHead',
-        num_stages=10,
+        num_stages=100,
         num_classes=400,
         in_channels=2048,
         dropout_ratio=0.5,
