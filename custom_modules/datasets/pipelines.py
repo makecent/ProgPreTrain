@@ -5,26 +5,39 @@ from mmaction.datasets.pipelines.augmentations import ThreeCrop as _ThreeCrop
 from mmaction.datasets.pipelines.augmentations import _init_lazy_if_proper
 
 
+# @PIPELINES.register_module()
+# class ProgLabel:
+#
+#     def __init__(self,
+#                  num_stages=10,
+#                  ordinal=False):
+#         self.num_stages = num_stages
+#         self.ordinal = ordinal
+#
+#     def __call__(self, results):
+#         clip_center = results['frame_inds'].reshape([results['num_clips'], results['clip_len']]).mean(axis=-1)
+#         prog_label = np.rint(clip_center / results['total_frames'] * self.num_stages)
+#         if self.ordinal:
+#             assert results['num_clips'] == 1
+#             prog_label = prog_label.astype(int)[0]
+#             ordinal_label = np.full(self.num_stages, fill_value=0.0, dtype='float32')
+#             ordinal_label[:prog_label] = 1.0
+#             results['prog_label'] = ordinal_label
+#         else:
+#             results['prog_label'] = prog_label / self.num_stages * 100
+#         return results
+
 @PIPELINES.register_module()
 class ProgLabel:
 
-    def __init__(self,
-                 num_stages=10,
-                 ordinal=False):
+    def __init__(self, num_stages=10):
         self.num_stages = num_stages
-        self.ordinal = ordinal
 
     def __call__(self, results):
         clip_center = results['frame_inds'].reshape([results['num_clips'], results['clip_len']]).mean(axis=-1)
-        prog_label = np.rint(clip_center / results['total_frames'] * self.num_stages)
-        if self.ordinal:
-            assert results['num_clips'] == 1
-            prog_label = prog_label.astype(int)[0]
-            ordinal_label = np.full(self.num_stages, fill_value=0.0, dtype='float32')
-            ordinal_label[:prog_label] = 1.0
-            results['prog_label'] = ordinal_label
-        else:
-            results['prog_label'] = prog_label / self.num_stages * 100
+        prog_label = np.rint(clip_center / results['total_frames'] * self.num_stages).astype(int)
+        results['prog_label'] = prog_label
+        results['label'] = results['label'] * self.num_stages + int(prog_label[0])
         return results
 
 
