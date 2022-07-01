@@ -9,6 +9,30 @@ import einops
 @LOCALIZERS.register_module()
 class Recognizer3DWithProg(Recognizer3D):
 
+    def forward_train(self, imgs, labels, prog_label, **kwargs):
+        """Defines the computation performed at every call when training."""
+
+        assert self.with_cls_head
+        imgs = imgs.reshape((-1, ) + imgs.shape[2:])
+        losses = dict()
+
+        x = self.extract_feat(imgs)
+
+        cls_score = self.cls_head(x)
+        cls_score = cls_score.view((-1, 400, 10))
+
+        cls_score1 = cls_score.max(dim=-1)
+        cls_score2 = cls_score.gather(index=einops.repeat(labels, 'b i-> b i k', k=10), dim=-2)
+
+        gt_labels = labels.squeeze()
+        loss_cls = self.cls_head.loss(cls_score2, prog_label, **kwargs)
+        losses['loss_prg'] = loss_cls.pop('loss_cls')
+        losses['top1_prg'] = loss_cls.pop('top1_acc')
+        loss_cls = self.cls_head.loss(cls_score1, gt_labels, **kwargs)
+        losses.update(loss_cls)
+
+        return losses
+
     def _do_test(self, imgs, prog_label=None):
         """Defines the computation performed at every call when evaluation,
         testing and gradcam."""

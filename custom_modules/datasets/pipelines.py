@@ -36,8 +36,8 @@ class ProgLabel:
     def __call__(self, results):
         clip_center = results['frame_inds'].reshape([results['num_clips'], results['clip_len']]).mean(axis=-1)
         prog_label = np.rint(clip_center / results['total_frames'] * self.num_stages).astype(int)
+        assert 0 <= prog_label < self.num_stages
         results['prog_label'] = prog_label
-        results['label'] = results['label'] * self.num_stages + int(prog_label[0])
         return results
 
 
