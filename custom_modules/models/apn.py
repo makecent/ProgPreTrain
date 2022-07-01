@@ -9,7 +9,7 @@ import einops
 @LOCALIZERS.register_module()
 class Recognizer3DWithProg(Recognizer3D):
 
-    def forward_train(self, imgs, labels, prog_label, **kwargs):
+    def forward_train(self, imgs, labels, prog_label=None, **kwargs):
         """Defines the computation performed at every call when training."""
 
         assert self.with_cls_head

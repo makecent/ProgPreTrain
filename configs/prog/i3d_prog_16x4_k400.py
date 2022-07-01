@@ -24,7 +24,7 @@ model = dict(
         init_std=0.01,
         topk=1),
     # model training and testing settings
-    train_cfg=None,
+    train_cfg=dict(aux_info='prog_label'),
     test_cfg=dict(average_clips='prob'))
 
 log_config = dict(interval=2000)
