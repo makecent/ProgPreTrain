@@ -24,11 +24,10 @@ class Recognizer3DWithProg(Recognizer3D):
         cls_score1 = cls_score.max(dim=-1)
         cls_score2 = cls_score.gather(index=einops.repeat(labels, 'b i-> b i k', k=10), dim=-2)
 
-        gt_labels = labels.squeeze()
-        loss_cls = self.cls_head.loss(cls_score2, prog_label, **kwargs)
+        loss_cls = self.cls_head.loss(cls_score2, prog_label.squeeze(), **kwargs)
         losses['loss_prg'] = loss_cls.pop('loss_cls')
         losses['top1_prg'] = loss_cls.pop('top1_acc')
-        loss_cls = self.cls_head.loss(cls_score1, gt_labels, **kwargs)
+        loss_cls = self.cls_head.loss(cls_score1, labels.squeeze(), **kwargs)
         losses.update(loss_cls)
 
         return losses
