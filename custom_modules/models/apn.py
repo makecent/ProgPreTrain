@@ -71,7 +71,7 @@ class Recognizer3DWithProg(Recognizer3D):
         assert self.with_cls_head
         cls_score = self.cls_head(feat)
 
-        if prog_label is not None:
+        if prog_label is not None and False:
             assert cls_score.shape == (30, 4000), "currently only support our config"
             cls_score = cls_score.reshape(1, 10, 3, 400, 10)
             cls_score = cls_score.gather(dim=-1, index=einops.repeat(prog_label, 'b (n i)-> b n i j k', i=3, j=400, k=1))
