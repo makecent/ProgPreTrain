@@ -21,7 +21,7 @@ class Recognizer3DWithProg(Recognizer3D):
         cls_score = self.cls_head(x)
         cls_score = cls_score.view((-1, 400, 10))
 
-        cls_score1 = cls_score.max(dim=-1).values
+        cls_score1 = cls_score.mean(dim=-1)
         cls_score2 = cls_score.gather(index=einops.repeat(labels, 'b i-> b i k', k=10), dim=-2).squeeze(dim=1)
 
         loss_cls = self.cls_head.loss(cls_score2, prog_label.squeeze(), **kwargs)
