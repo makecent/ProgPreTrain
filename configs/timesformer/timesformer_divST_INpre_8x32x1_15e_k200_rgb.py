@@ -5,7 +5,8 @@ model = dict(
     type='Recognizer3D',
     backbone=dict(
         type='TimeSformer',
-        pretrained=None,
+        pretrained=  # noqa: E251
+        'https://download.openmmlab.com/mmaction/recognition/timesformer/vit_base_patch16_224.pth',  # noqa: E501
         num_transformer_layers=6,
         num_frames=8,
         img_size=224,
@@ -120,4 +121,5 @@ lr_config = dict(policy='step', step=[5, 10])
 total_epochs = 15
 
 # runtime settings
+log_config = dict(interval=500)
 checkpoint_config = dict(interval=1)

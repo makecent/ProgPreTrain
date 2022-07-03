@@ -121,4 +121,5 @@ lr_config = dict(policy='step', step=[5, 10])
 total_epochs = 15
 
 # runtime settings
+log_config = dict(interval=500)
 checkpoint_config = dict(interval=1)
