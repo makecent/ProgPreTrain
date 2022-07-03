@@ -9,6 +9,29 @@ import einops
 @LOCALIZERS.register_module()
 class Recognizer3DWithProg(Recognizer3D):
 
+    def forward_train(self, imgs, labels, prog_label=None, **kwargs):
+        """Defines the computation performed at every call when training."""
+
+        assert self.with_cls_head
+        imgs = imgs.reshape((-1, ) + imgs.shape[2:])
+        losses = dict()
+
+        x = self.extract_feat(imgs)
+
+        cls_score = self.cls_head(x)
+        cls_score = cls_score.view((-1, 400, 10))
+
+        cls_score1 = cls_score.mean(dim=-1)
+        cls_score2 = cls_score.gather(index=einops.repeat(labels, 'b i-> b i k', k=10), dim=-2).squeeze(dim=1)
+
+        loss_cls = self.cls_head.loss(cls_score2, prog_label.squeeze(), **kwargs)
+        losses['loss_prg'] = loss_cls.pop('loss_cls')
+        losses['top1_prg'] = loss_cls.pop('top1_acc')
+        loss_cls = self.cls_head.loss(cls_score1, labels.squeeze(), **kwargs)
+        losses.update(loss_cls)
+
+        return losses
+
     def _do_test(self, imgs, prog_label=None):
         """Defines the computation performed at every call when evaluation,
         testing and gradcam."""
@@ -71,10 +94,10 @@ class Recognizer3DWithProg(Recognizer3D):
         assert self.with_cls_head
         cls_score = self.cls_head(feat)
 
-        if prog_label is not None:
+        if prog_label is not None and False:
             assert cls_score.shape == (30, 4000), "currently only support our config"
             cls_score = cls_score.reshape(1, 10, 3, 400, 10)
-            cls_score = cls_score.gather(dim=-1, index=einops.repeat(prog_label, 'b n -> b n i j k', i=3, j=400, k=1))
+            cls_score = cls_score.gather(dim=-1, index=einops.repeat(prog_label, 'b (n i)-> b n i j k', i=3, j=400, k=1))
             cls_score = cls_score.reshape(30, 400)
         else:
             cls_score = cls_score.reshape(-1, 400, 10).max(dim=-1).values
