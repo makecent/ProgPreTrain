@@ -106,6 +106,7 @@ class TimeSformer(nn.Module):
                  dropout_ratio=0.,
                  transformer_layers=None,
                  attention_type='divided_space_time',
+                 top_heavy=0,
                  extra_kwargs=dict(),
                  norm_cfg=dict(type='LN', eps=1e-6),
                  **kwargs):
@@ -121,6 +122,7 @@ class TimeSformer(nn.Module):
         self.num_transformer_layers = num_transformer_layers
         self.attention_type = attention_type
         self.extra_kwargs = extra_kwargs
+        self.top_heavy = top_heavy
 
         self.patch_embed = PatchEmbed(
             img_size=img_size,
@@ -336,7 +338,32 @@ class TimeSformer(nn.Module):
                         batch_first=True)
                     for i in range(num_transformer_layers)
                 ]
-
+            if self.top_heavy > 0:
+                _transformerlayers_cfg[:-self.top_heavy] = [
+                    dict(
+                        type='BaseTransformerLayer',
+                        attn_cfgs=[
+                            dict(
+                                type='MultiheadAttention',
+                                embed_dims=embed_dims,
+                                num_heads=num_heads,
+                                batch_first=True,
+                                dropout_layer=dict(
+                                    type='DropPath', drop_prob=dpr[i]))
+                        ],
+                        ffn_cfgs=dict(
+                            type='FFN',
+                            embed_dims=embed_dims,
+                            feedforward_channels=embed_dims * 4,
+                            num_fcs=2,
+                            act_cfg=dict(type='GELU'),
+                            dropout_layer=dict(
+                                type='DropPath', drop_prob=dpr[i])),
+                        operation_order=('norm', 'self_attn', 'norm', 'ffn'),
+                        norm_cfg=dict(type='LN', eps=1e-6),
+                        batch_first=True)
+                    for i in range(num_transformer_layers - self.top_heavy)
+                ]
             transformer_layers = ConfigDict(
                 dict(
                     type='TransformerLayerSequence',
