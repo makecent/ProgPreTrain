@@ -90,7 +90,8 @@ class TimeSformer(nn.Module):
             `dict(type='LN', eps=1e-6)`.
     """
     supported_attention_types = [
-        'divided_space_time', 'space_only', 'joint_space_time', 'divided_space', 'decomposed_space_time', 'distillation', 'divST_single'
+        'divided_space_time', 'space_only', 'joint_space_time', 'divided_space', 'decomposed_space_time', 'distillation',
+        'divST_single', 'divST_convT'
     ]
 
     def __init__(self,
@@ -132,7 +133,7 @@ class TimeSformer(nn.Module):
         self.pos_embed = nn.Parameter(
             torch.zeros(1, num_patches + 1, embed_dims))
         self.drop_after_pos = nn.Dropout(p=dropout_ratio)
-        if self.attention_type != 'space_only':
+        if self.attention_type != 'space_only' and self.attention_type != 'divST_convT':
             self.time_embed = nn.Parameter(
                 torch.zeros(1, num_frames, embed_dims))
             self.drop_after_time = nn.Dropout(p=dropout_ratio)
@@ -265,6 +266,32 @@ class TimeSformer(nn.Module):
                                 embed_dims=embed_dims,
                                 num_heads=num_heads,
                                 temporal_dim=num_frames,
+                                batch_first=True,
+                                dropout_layer=dict(
+                                    type='DropPath', drop_prob=dpr[i]))
+                        ],
+                        ffn_cfgs=dict(
+                            type='FFN',
+                            embed_dims=embed_dims,
+                            feedforward_channels=embed_dims * 4,
+                            num_fcs=2,
+                            act_cfg=dict(type='GELU'),
+                            dropout_layer=dict(
+                                type='DropPath', drop_prob=dpr[i])),
+                        operation_order=('norm', 'self_attn', 'norm', 'ffn'),
+                        norm_cfg=dict(type='LN', eps=1e-6),
+                        batch_first=True)
+                    for i in range(num_transformer_layers)
+                ]
+            elif self.attention_type == 'divST_convT':
+                _transformerlayers_cfg = [
+                    dict(
+                        type='BaseTransformerLayer',
+                        attn_cfgs=[
+                            dict(
+                                type='SpaceAttentionTimeConv',
+                                embed_dims=embed_dims,
+                                num_heads=num_heads,
                                 batch_first=True,
                                 dropout_layer=dict(
                                     type='DropPath', drop_prob=dpr[i]))
@@ -419,7 +446,14 @@ class TimeSformer(nn.Module):
                                                   'temporal_attn.attn')
                         state_dict[new_key] = state_dict[old_key].clone()
 
-
+            if self.attention_type == 'divST_convT':
+                # copy the parameters of space attention to time attention
+                old_state_dict_keys = list(state_dict.keys())
+                for old_key in old_state_dict_keys:
+                    if 'norms' in old_key:
+                        new_key = old_key.replace('norms.0',
+                                                  'attentions.0.norm')
+                        state_dict[new_key] = state_dict[old_key].clone()
             load_state_dict(self, state_dict, strict=False, logger=logger)
 
     def forward(self, x):
@@ -434,7 +468,7 @@ class TimeSformer(nn.Module):
         x = x + self.pos_embed
         x = self.drop_after_pos(x)
         # Add Time Embedding
-        if self.attention_type != 'space_only':
+        if self.attention_type != 'space_only' and self.attention_type != 'divST_convT':
             # x [batch_size, num_patches * num_frames + 1, embed_dims]
             cls_tokens = x[:batches, 0, :].unsqueeze(1)
             x = rearrange(x[:, 1:, :], '(b t) p m -> (b p) t m', b=batches)
@@ -445,7 +479,7 @@ class TimeSformer(nn.Module):
 
         x = self.transformer_layers(x, None, None)
 
-        if self.attention_type == 'space_only':
+        if self.attention_type == 'space_only' or self.attention_type == 'divST_convT':
             # x [batch_size, num_patches + 1, embed_dims]
             x = x.view(-1, self.num_frames, *x.size()[-2:])
             x = torch.mean(x, 1)

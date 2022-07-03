@@ -227,6 +227,7 @@ class TimeSpaceAttention(nn.Module):
         self.head_dim = embed_dims // num_heads
         self.temporal_dim = temporal_dim
         self.scale = self.head_dim ** -0.5
+        self.with_cls_token = True
 
         self.in_proj_weight = nn.Parameter(torch.empty((3 * embed_dims, embed_dims)))
         self.in_proj_bias = nn.Parameter(torch.empty(3 * embed_dims))
@@ -238,7 +239,7 @@ class TimeSpaceAttention(nn.Module):
         constant_(self.in_proj_bias, 0.)
         constant_(self.out_proj.bias, 0.)
 
-    def forward(self, query, key, value, *args, **kwargs):
+    def forward_v1(self, query, key, value, *args, **kwargs):
         # cls_token = query[:, 0, :].unsqueeze(1)
         # query = query[:, 1:, :]
         tgt_len, bsz, embed_dim = query.shape
@@ -247,17 +248,79 @@ class TimeSpaceAttention(nn.Module):
         k = k.contiguous().view(k.shape[0], bsz * self.num_heads, self.head_dim).transpose(0, 1)
         v = v.contiguous().view(v.shape[0], bsz * self.num_heads, self.head_dim).transpose(0, 1)
 
-        # Temporal attention
-        x1 = self.temporal_attention(q, k, v)
-        x2 = self.spatial_attention(q, k, v)
-        x = x1 + x2
+        x1, cls_token = self.spatial_attention(q, k, v)
+        x2 = self.temporal_attention(q, k, v)
+        x = torch.cat((cls_token, x1 + x2), dim=1)
+        x = x.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
+        x = F.linear(x, self.out_proj.weight, self.out_proj.bias)
+        return x, None
+
+    def forward(self, query, key, value, *args, **kwargs):
+        tgt_len, bsz, embed_dim = query.shape
+        q, k, v = F._in_projection_packed(query, key, value, self.in_proj_weight, self.in_proj_bias)
+        q = q.contiguous().view(tgt_len, bsz * self.num_heads, self.head_dim).transpose(0, 1)
+        k = k.contiguous().view(k.shape[0], bsz * self.num_heads, self.head_dim).transpose(0, 1)
+        v = v.contiguous().view(v.shape[0], bsz * self.num_heads, self.head_dim).transpose(0, 1)
+
+        bh, l, d = q.size()
+        if self.with_cls_token:
+            l -= 1
+        t, s = self.temporal_dim, l // self.temporal_dim
+
+        if self.with_cls_token:
+            cls_token_q, q = q[:, 0, :], q[:, 1:, :]
+            cls_token_k, k = k[:, 0, :], k[:, 1:, :]
+            cls_token_v, v = v[:, 0, :], v[:, 1:, :]
+            cls_token_q = repeat(cls_token_q, 'bh d -> bh t d', t=t)
+            cls_token_k = repeat(cls_token_k, 'bh d -> bh t d', t=t)
+            cls_token_v = repeat(cls_token_v, 'bh d -> bh t d', t=t)
+            q = torch.cat([cls_token_q, q], dim=1)
+            k = torch.cat([cls_token_k, k], dim=1)
+            v = torch.cat([cls_token_v, v], dim=1)
+            s += 1
+
+        q_spatial = rearrange(q, 'bh (s t) d -> (bh t) s d', bh=bh, s=s, t=t, d=d)
+        k_spatial = rearrange(k, 'bh (s t) d -> (bh t) s d', bh=bh, s=s, t=t, d=d)
+        v_spatial = rearrange(v, 'bh (s t) d -> (bh t) s d', bh=bh, s=s, t=t, d=d)
+
+        q_temporal = rearrange(q, 'bh (s t) d -> (bh s) t d', bh=bh, s=s, t=t, d=d)
+        k_temporal = rearrange(k, 'bh (s t) d -> (bh s) t d', bh=bh, s=s, t=t, d=d)
+        v_temporal = rearrange(v, 'bh (s t) d -> (bh s) t d', bh=bh, s=s, t=t, d=d)
+
+        attn_spatial = q_spatial @ k_spatial.transpose(-1, -2)  # (bh t) s s
+        attn_temporal = q_temporal @ k_temporal.transpose(-1, -2)  # (bh s) t t
+
+        attn_temporal = rearrange(attn_temporal, '(bh s) t1 t2 -> (bh t1) s t2', bh=bh, s=s, t1=t, t2=t)
+        attn = torch.cat([attn_spatial, attn_temporal], dim=-1) * self.scale
+        attn = attn.softmax(dim=-1)
+        attn_spatial, attn_temporal = attn.split((s, t), dim=-1)
+        attn_temporal = rearrange(attn_temporal, '(bh t1) s t2 -> (bh s) t1 t2', bh=bh, s=s, t1=t, t2=t)
+
+        x_spatial = attn_spatial @ v_spatial  # (bh t) s d
+        x_temporal = attn_temporal @ v_temporal  # (bh s) t d
+
+        x_spatial = rearrange(x_spatial, '(bh t) s d -> bh (s t) d', bh=bh, s=s, t=t)
+        x_temporal = rearrange(x_temporal, '(bh s) t d -> bh (s t) d', bh=bh, s=s, t=t)
+        x = x_spatial + x_temporal
+
+        if self.with_cls_token:
+            # bh (s+1 t) d
+            cls_token, x = x[:, :t, :], x[:, t:, :]
+            cls_token = cls_token.mean(dim=1, keepdim=True)
+            x = torch.cat([cls_token, x], dim=1)
+
         x = x.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         x = F.linear(x, self.out_proj.weight, self.out_proj.bias)
         return x, None
 
     def temporal_attention(self, q, k, v):
         bh, l, d = q.size()
+        l -= 1
         t, s = self.temporal_dim, l // self.temporal_dim
+
+        q = q[:, 1:, :]
+        k = k[:, 1:, :]
+        v = v[:, 1:, :]
 
         q = rearrange(q, 'bh (s t) d -> (bh s) t d', bh=bh, s=s, t=t, d=d)
         k = rearrange(k, 'bh (s t) d -> (bh s) t d', bh=bh, s=s, t=t, d=d)
@@ -272,18 +335,32 @@ class TimeSpaceAttention(nn.Module):
 
     def spatial_attention(self, q, k, v):
         bh, l, d = q.size()
+        l -= 1
         t, s = self.temporal_dim, l // self.temporal_dim
 
+        cls_token_q = repeat(q[:, 0, :], 'bh d -> (bh t) i d', i=1, t=t)
+        q = q[:, 1:, :]
+
+        cls_token_k = repeat(k[:, 0, :], 'bh d -> (bh t) i d', i=1, t=t)
+        k = k[:, 1:, :]
+
+        cls_token_v = repeat(v[:, 0, :], 'bh d -> (bh t) i d', i=1, t=t)
+        v = v[:, 1:, :]
+
         q = rearrange(q, 'bh (s t) d -> (bh t) s d', bh=bh, s=s, t=t, d=d)
+        q = torch.cat((cls_token_q, q), dim=1)
         k = rearrange(k, 'bh (s t) d -> (bh t) s d', bh=bh, s=s, t=t, d=d)
+        k = torch.cat((cls_token_k, k), dim=1)
         v = rearrange(v, 'bh (s t) d -> (bh t) s d', bh=bh, s=s, t=t, d=d)
+        v = torch.cat((cls_token_v, v), dim=1)
 
         attn = (q @ k.transpose(-1, -2)) * self.scale
         attn = attn.softmax(dim=-1)
         x = attn @ v
 
-        x = rearrange(x, '(bh t) s d -> bh (s t) d', bh=bh, t=t, s=s, d=d)
-        return x
+        cls_token = repeat(x[:, 0, :], '(bh t) d -> bh t i d', i=1, t=t).mean(dim=1)
+        x = rearrange(x[:, 1:, :], '(bh t) s d -> bh (s t) d', bh=bh, t=t, s=s, d=d)
+        return x, cls_token
 
 
 @ATTENTION.register_module()
@@ -294,3 +371,119 @@ class MultiheadTimeSpaceAttention(MultiheadAttention):
                  **kwargs):
         super().__init__(*args, **kwargs)
         self.attn = TimeSpaceAttention(self.embed_dims, self.num_heads, temporal_dim=temporal_dim)
+
+
+@ATTENTION.register_module()
+class SpaceAttentionTimeConv(MultiheadAttention):
+    def __init__(self, *args, **kwargs):
+        super(SpaceAttentionTimeConv, self).__init__(*args, **kwargs)
+        self.dwconv = nn.Conv1d(in_channels=self.embed_dims, out_channels=self.embed_dims, kernel_size=3, stride=1,
+                                padding=1, groups=self.embed_dims)
+        self.pwconv1 = nn.Linear(self.embed_dims, self.embed_dims)
+        self.twconv2 = nn.Linear(8, 8)
+        self.norm = build_norm_layer(dict(type='LN', eps=1e-6), self.embed_dims)[1]
+        self.normt = build_norm_layer(dict(type='LN', eps=1e-6), 8)[1]
+
+    def forward(self,
+                query,
+                key=None,
+                value=None,
+                identity=None,
+                query_pos=None,
+                key_pos=None,
+                attn_mask=None,
+                key_padding_mask=None,
+                **kwargs):
+        """Forward function for `MultiheadAttention`.
+
+        **kwargs allow passing a more general data flow when combining
+        with other operations in `transformerlayer`.
+
+        Args:
+            query (Tensor): The input query with shape [num_queries, bs,
+                embed_dims] if self.batch_first is False, else
+                [bs, num_queries embed_dims].
+            key (Tensor): The key tensor with shape [num_keys, bs,
+                embed_dims] if self.batch_first is False, else
+                [bs, num_keys, embed_dims] .
+                If None, the ``query`` will be used. Defaults to None.
+            value (Tensor): The value tensor with same shape as `key`.
+                Same in `nn.MultiheadAttention.forward`. Defaults to None.
+                If None, the `key` will be used.
+            identity (Tensor): This tensor, with the same shape as x,
+                will be used for the identity link.
+                If None, `x` will be used. Defaults to None.
+            query_pos (Tensor): The positional encoding for query, with
+                the same shape as `x`. If not None, it will
+                be added to `x` before forward function. Defaults to None.
+            key_pos (Tensor): The positional encoding for `key`, with the
+                same shape as `key`. Defaults to None. If not None, it will
+                be added to `key` before forward function. If None, and
+                `query_pos` has the same shape as `key`, then `query_pos`
+                will be used for `key_pos`. Defaults to None.
+            attn_mask (Tensor): ByteTensor mask with shape [num_queries,
+                num_keys]. Same in `nn.MultiheadAttention.forward`.
+                Defaults to None.
+            key_padding_mask (Tensor): ByteTensor with shape [bs, num_keys].
+                Defaults to None.
+
+        Returns:
+            Tensor: forwarded results with shape
+            [num_queries, bs, embed_dims]
+            if self.batch_first is False, else
+            [bs, num_queries embed_dims].
+        """
+
+        if key is None:
+            key = query
+        if value is None:
+            value = key
+        if identity is None:
+            identity = query
+        if key_pos is None:
+            if query_pos is not None:
+                # use query_pos if key_pos is not available
+                if query_pos.shape == key.shape:
+                    key_pos = query_pos
+                else:
+                    warnings.warn(f'position encoding of key is'
+                                  f'missing in {self.__class__.__name__}.')
+        if query_pos is not None:
+            query = query + query_pos
+        if key_pos is not None:
+            key = key + key_pos
+
+        # Because the dataflow('key', 'query', 'value') of
+        # ``torch.nn.MultiheadAttention`` is (num_query, batch,
+        # embed_dims), We should adjust the shape of dataflow from
+        # batch_first (batch, num_query, embed_dims) to num_query_first
+        # (num_query ,batch, embed_dims), and recover ``attn_output``
+        # from num_query_first to batch_first.
+        if self.batch_first:
+            query = query.transpose(0, 1)
+            key = key.transpose(0, 1)
+            value = value.transpose(0, 1)
+
+        out = self.attn(
+            query=query,
+            key=key,
+            value=value,
+            attn_mask=attn_mask,
+            key_padding_mask=key_padding_mask)[0]
+
+        if self.batch_first:
+            out = out.transpose(0, 1)
+        out = identity + self.dropout_layer(self.proj_drop(out))
+
+        identity = out
+        out = rearrange(out, '(b t) p m -> (b p) m t', t=8)
+        out = self.dwconv(out)
+        out = rearrange(out, '(b p) m t -> (b t) p m', p=197)
+        out = self.norm(out)
+        out = F.gelu(self.pwconv1(out))
+
+        out = rearrange(out, '(b t) p m -> (b p) m t', t=8)
+        out = self.normt(out)
+        out = F.gelu(self.twconv2(out))
+        out = rearrange(out, '(b p) m t -> (b t) p m', p=197)
+        return identity + out

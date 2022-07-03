@@ -7,7 +7,7 @@ model = dict(
         type='TimeSformer',
         pretrained=  # noqa: E251
         'https://download.openmmlab.com/mmaction/recognition/timesformer/vit_base_patch16_224.pth',  # noqa: E501
-        num_transformer_layers=8,
+        num_transformer_layers=6,
         num_frames=8,
         img_size=224,
         patch_size=16,
@@ -17,7 +17,7 @@ model = dict(
         transformer_layers=None,
         # attention_type='decomposed_space_time',
         # extra_kwargs=dict(temporal_cls_attn=False, in_proj=False, out_proj=False, mid_residual=False),
-        attention_type='divST_single',
+        attention_type='divST_convT',
         norm_cfg=dict(type='LN', eps=1e-6)),
     cls_head=dict(type='TimeSformerHead', num_classes=174, in_channels=768),
     # model training and testing settings
