@@ -15,7 +15,7 @@ model = dict(
         in_channels=3,
         dropout_ratio=0.,
         transformer_layers=None,
-        attention_type='divided_space_time',
+        attention_type='divST_convT',
         norm_cfg=dict(type='LN', eps=1e-6)),
     cls_head=dict(type='TimeSformerHead', num_classes=174, in_channels=768),
     # model training and testing settings
