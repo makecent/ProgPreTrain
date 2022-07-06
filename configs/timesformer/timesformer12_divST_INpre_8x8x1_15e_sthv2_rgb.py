@@ -35,7 +35,7 @@ img_norm_cfg = dict(
     mean=[127.5, 127.5, 127.5], std=[127.5, 127.5, 127.5], to_bgr=False)
 
 train_pipeline = [
-    dict(type='SampleFrames', clip_len=8, frame_interval=32, num_clips=1),
+    dict(type='SampleFrames', clip_len=8, frame_interval=8, num_clips=1),
     dict(type='RawFrameDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomResizedCrop'),
@@ -50,7 +50,7 @@ val_pipeline = [
     dict(
         type='SampleFrames',
         clip_len=8,
-        frame_interval=32,
+        frame_interval=8,
         num_clips=1,
         test_mode=True),
     dict(type='RawFrameDecode'),
@@ -65,7 +65,7 @@ test_pipeline = [
     dict(
         type='SampleFrames',
         clip_len=8,
-        frame_interval=32,
+        frame_interval=8,
         num_clips=1,
         test_mode=True),
     dict(type='RawFrameDecode'),
