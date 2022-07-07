@@ -39,9 +39,8 @@ img_norm_cfg = dict(
 train_pipeline = [
     dict(type='SampleFrames', clip_len=8, frame_interval=4, num_clips=1),
     dict(type='RawFrameDecode'),
-    dict(type='Resize', scale=(-1, 256)),
-    dict(type='RandomResizedCrop'),
-    dict(type='Resize', scale=(224, 224), keep_ratio=False),
+    dict(type='RandomRescale', scale_range=(256, 320)),
+    dict(type='RandomCrop', size=224),
     dict(type='Flip', flip_ratio=0.5, flip_label_map=sthv2_flip_label_map),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
