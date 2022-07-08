@@ -379,8 +379,10 @@ class SpaceAttentionTimeConv(MultiheadAttention):
         super(SpaceAttentionTimeConv, self).__init__(*args, **kwargs)
         self.dwconv = nn.Conv1d(in_channels=self.embed_dims, out_channels=self.embed_dims, kernel_size=3, stride=1,
                                 padding=1, groups=self.embed_dims)
-        self.pwconv1 = nn.Linear(self.embed_dims, self.embed_dims)
-        self.twconv2 = nn.Linear(8, 8)
+        self.pwconv1 = nn.Linear(self.embed_dims, 2 * self.embed_dims)
+        self.pwconv2 = nn.Linear(2 * self.embed_dims, self.embed_dims)
+        self.twconv1 = nn.Linear(8, 32)
+        self.twconv2 = nn.Linear(32, 8)
         self.norm = build_norm_layer(dict(type='LN', eps=1e-6), self.embed_dims)[1]
         self.normt = build_norm_layer(dict(type='LN', eps=1e-6), 8)[1]
 
@@ -481,9 +483,13 @@ class SpaceAttentionTimeConv(MultiheadAttention):
         out = rearrange(out, '(b p) m t -> (b t) p m', p=197)
         out = self.norm(out)
         out = F.gelu(self.pwconv1(out))
+        out = self.pwconv2(out)
+        out = identity + out
 
+        identity = out
         out = rearrange(out, '(b t) p m -> (b p) m t', t=8)
         out = self.normt(out)
-        out = F.gelu(self.twconv2(out))
+        out = F.gelu(self.twconv1(out))
+        out = self.twconv2(out)
         out = rearrange(out, '(b p) m t -> (b t) p m', p=197)
         return identity + out
