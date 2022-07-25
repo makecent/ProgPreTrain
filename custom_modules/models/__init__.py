@@ -10,6 +10,7 @@ from .decomposed_transf import DecomposedAttentionWithNorm
 from .distillation_divST import ModelWiseDistillation
 from .distillation_head import DistillationHead
 from .apn import Recognizer3DWithProg
+from .apn_head import I3DHeadWithProg
 
 __all__ = [
     'MViTHead', "MultiscaleVisionTransformers", "SwinTransformer3D"

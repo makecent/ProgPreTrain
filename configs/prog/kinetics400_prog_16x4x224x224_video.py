@@ -1,16 +1,16 @@
 # dataset settings
-dataset_type = 'VideoDataset'
+dataset_type = 'VideoDatasetWithProg'
 data_root = 'my_data/kinetics400/videos_train'
 data_root_val = 'my_data/kinetics400/videos_val'
 ann_file_train = 'my_data/kinetics400/kinetics400_train_list_videos.txt'
-ann_file_val = 'my_data/kinetics400/kinetics400_val_list_videos.txt'
+ann_file_val = 'my_data/kinetics400/demo_kinetics400_val_list_videos.txt'
 ann_file_test = 'my_data/kinetics400/kinetics400_val_list_videos.txt'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_bgr=False)
 train_pipeline = [
     dict(type='DecordInit'),
     dict(type='SampleFrames', clip_len=16, frame_interval=4, num_clips=1),
-    dict(type='ProgLabel', num_stages=10),
+    dict(type='ProgLabel', num_stages=100),
     dict(type='DecordDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(
@@ -29,25 +29,25 @@ train_pipeline = [
 val_pipeline = [
     dict(type='DecordInit'),
     dict(type='SampleFrames', clip_len=16, frame_interval=4, num_clips=1),
+    dict(type='ProgLabel', num_stages=100),
     dict(type='DecordDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='CenterCrop', crop_size=224),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
-    dict(type='Collect', keys=['imgs'], meta_keys=[]),
-    dict(type='ToTensor', keys=['imgs'])
+    dict(type='Collect', keys=['imgs', 'prog_label'], meta_keys=[]),
+    dict(type='ToTensor', keys=['imgs', 'prog_label'])
 ]
 test_pipeline = [
     dict(type='DecordInit'),
     dict(type='SampleFrames', clip_len=16, frame_interval=4, num_clips=10, test_mode=True),
-    dict(type='ProgLabel', num_stages=10),
     dict(type='DecordDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='ThreeCrop', crop_size=256),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
-    dict(type='Collect', keys=['imgs', 'prog_label'], meta_keys=[]),
-    dict(type='ToTensor', keys=['imgs', 'prog_label'])
+    dict(type='Collect', keys=['imgs', ], meta_keys=[]),
+    dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
     videos_per_gpu=8,
@@ -70,4 +70,4 @@ data = dict(
         pipeline=test_pipeline))
 
 # evaluation
-evaluation = dict(interval=5, metrics=['top_k_accuracy', 'mean_class_accuracy'])
+evaluation = dict(interval=5, metrics=['top_k_accuracy', 'mean_class_accuracy', 'MAE'])

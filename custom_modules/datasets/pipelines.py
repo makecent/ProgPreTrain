@@ -27,17 +27,28 @@ from mmaction.datasets.pipelines.augmentations import _init_lazy_if_proper
 #             results['prog_label'] = prog_label / self.num_stages * 100
 #         return results
 
+
 @PIPELINES.register_module()
 class ProgLabel:
 
-    def __init__(self, num_stages=10):
+    def __init__(self, num_stages=100):
         self.num_stages = num_stages
 
+    @staticmethod
+    def _get_prog(results):
+        assert results['num_clips'] == 1, "progression label should only used in training"
+        clip_center = results['frame_inds'].mean()
+        prog = np.clip(clip_center / results['total_frames'], a_min=0, a_max=1)
+        return prog
+
     def __call__(self, results):
-        clip_center = results['frame_inds'].reshape([results['num_clips'], results['clip_len']]).mean(axis=-1)
-        prog_label = np.rint(clip_center / results['total_frames'] * self.num_stages).astype(int)
-        assert 0 <= prog_label < self.num_stages
-        results['prog_label'] = prog_label
+        """Convert progression_label to ordinal label. e.g., 0.031 => [1, 1, 1, 0, ...]."""
+        ordinal_label = np.full(self.num_stages, fill_value=0.0, dtype='float32')
+        prog = results['progression_label'] if 'progression_label' in results else self._get_prog(results)
+
+        denormalized_prog = round(prog * self.num_stages)
+        ordinal_label[:denormalized_prog] = 1.0
+        results['prog_label'] = ordinal_label
         return results
 
 

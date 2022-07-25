@@ -1,4 +1,4 @@
-from .custom_dataset import CustomVideoDataset
+from .custom_dataset import VideoDatasetWithProg
 from .pipelines import ProgLabel, ThreeCrop
 from .blendings import BatchAugBlending
 

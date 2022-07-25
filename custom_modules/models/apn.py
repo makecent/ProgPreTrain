@@ -4,6 +4,7 @@ from mmaction.models.builder import LOCALIZERS, build_backbone, build_head
 from mmaction.models.recognizers import Recognizer3D
 from torch import nn
 import einops
+import numpy as np
 
 
 @LOCALIZERS.register_module()
@@ -13,22 +14,21 @@ class Recognizer3DWithProg(Recognizer3D):
         """Defines the computation performed at every call when training."""
 
         assert self.with_cls_head
-        imgs = imgs.reshape((-1, ) + imgs.shape[2:])
+        imgs = imgs.reshape((-1,) + imgs.shape[2:])
         losses = dict()
 
         x = self.extract_feat(imgs)
+        if self.with_neck:
+            x, loss_aux = self.neck(x, labels.squeeze())
+            losses.update(loss_aux)
 
-        cls_score = self.cls_head(x)
-        cls_score = cls_score.view((-1, 400, 10))
-
-        cls_score1 = cls_score.mean(dim=-1)
-        cls_score2 = cls_score.gather(index=einops.repeat(labels, 'b i-> b i k', k=10), dim=-2).squeeze(dim=1)
-
-        loss_cls = self.cls_head.loss(cls_score2, prog_label.squeeze(), **kwargs)
-        losses['loss_prg'] = loss_cls.pop('loss_cls')
-        losses['top1_prg'] = loss_cls.pop('top1_acc')
-        loss_cls = self.cls_head.loss(cls_score1, labels.squeeze(), **kwargs)
+        cls_score, reg_score = self.cls_head(x)
+        gt_labels = labels.squeeze()
+        loss_cls = self.cls_head.loss(cls_score, gt_labels, **kwargs)
         losses.update(loss_cls)
+
+        gt_prog = prog_label.squeeze(dim=-1)
+        losses['loss_reg'] = self.cls_head.loss_reg(reg_score, gt_prog, **kwargs)
 
         return losses
 
@@ -37,7 +37,7 @@ class Recognizer3DWithProg(Recognizer3D):
         testing and gradcam."""
         batches = imgs.shape[0]
         num_segs = imgs.shape[1]
-        imgs = imgs.reshape((-1, ) + imgs.shape[2:])
+        imgs = imgs.reshape((-1,) + imgs.shape[2:])
 
         if self.max_testing_views is not None:
             total_views = imgs.shape[0]
@@ -92,19 +92,45 @@ class Recognizer3DWithProg(Recognizer3D):
 
         # should have cls_head if not extracting features
         assert self.with_cls_head
-        cls_score = self.cls_head(feat)
-
-        if prog_label is not None and False:
-            assert cls_score.shape == (30, 4000), "currently only support our config"
-            cls_score = cls_score.reshape(1, 10, 3, 400, 10)
-            cls_score = cls_score.gather(dim=-1, index=einops.repeat(prog_label, 'b (n i)-> b n i j k', i=3, j=400, k=1))
-            cls_score = cls_score.reshape(30, 400)
-        else:
-            cls_score = cls_score.reshape(-1, 400, 10).max(dim=-1).values
+        cls_score, reg_score = self.cls_head(feat)
         cls_score = self.average_clip(cls_score, num_segs)
-        return cls_score
+        if prog_label is not None:
+            prog_mae = progression_mae(reg_score, prog_label)
+            return list(zip(cls_score.cpu().numpy(), prog_mae.cpu().numpy()))
+        else:
+            return cls_score.cpu().numpy()
 
     def forward_test(self, imgs, prog_label=None):
         """Defines the computation performed at every call when evaluation and
         testing."""
-        return self._do_test(imgs, prog_label).cpu().numpy()
+        return self._do_test(imgs, prog_label)
+
+
+def decode_progression(reg_score):
+    batch_size, num_stage = reg_score.shape
+    if isinstance(reg_score, torch.Tensor):
+        progression = torch.count_nonzero(reg_score > 0.5, dim=-1)
+        # x1 = torch.cat([torch.ones((batch_size, 1), device=reg_score.device), reg_score], dim=-1)
+        # x2 = torch.cat([reg_score, torch.zeros((batch_size, 1), device=reg_score.device)], dim=-1)
+        # p = (x1 - x2).clamp(0)
+        # v = torch.arange(num_stage+1, device=reg_score.device).repeat((batch_size, 1))
+        # progression = (p * v).sum(dim=-1)
+    elif isinstance(reg_score, np.ndarray):
+        progression = np.count_nonzero(reg_score > 0.5, axis=-1)
+    else:
+        raise TypeError(f"unsupported reg_score type: {type(reg_score)}")
+    progression = progression * 100 / num_stage
+    return progression
+
+
+def progression_mae(reg_score, progression_label):
+    progression = decode_progression(reg_score)
+    progression_label = decode_progression(progression_label)
+    print(progression.shape, progression_label.shape)
+    if isinstance(reg_score, torch.Tensor):
+        mae = torch.abs(progression - progression_label)
+    elif isinstance(reg_score, np.ndarray):
+        mae = np.abs(progression - progression_label)
+    else:
+        raise TypeError(f"unsupported reg_score type: {type(reg_score)}")
+    return mae
