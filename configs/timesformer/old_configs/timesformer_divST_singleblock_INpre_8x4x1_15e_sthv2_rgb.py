@@ -32,16 +32,16 @@ ann_file_train = 'my_data/sthv2/sthv2_train_list_rawframes.txt'
 ann_file_val = 'my_data/sthv2/sthv2_val_list_rawframes.txt'
 ann_file_test = 'my_data/sthv2/sthv2_val_list_rawframes.txt'
 
+sthv2_flip_label_map = {86: 87, 87: 86, 93: 94, 94: 93, 166: 167, 167: 166}
 img_norm_cfg = dict(
     mean=[127.5, 127.5, 127.5], std=[127.5, 127.5, 127.5], to_bgr=False)
 
 train_pipeline = [
     dict(type='SampleFrames', clip_len=8, frame_interval=4, num_clips=1),
     dict(type='RawFrameDecode'),
-    dict(type='Resize', scale=(-1, 256)),
-    dict(type='RandomResizedCrop'),
-    dict(type='Resize', scale=(224, 224), keep_ratio=False),
-    dict(type='Flip', flip_ratio=0.5),
+    dict(type='RandomRescale', scale_range=(256, 320)),
+    dict(type='RandomCrop', size=224),
+    dict(type='Flip', flip_ratio=0.5, flip_label_map=sthv2_flip_label_map),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
     dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),

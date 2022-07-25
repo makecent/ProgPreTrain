@@ -14,7 +14,9 @@ model = dict(
         in_channels=3,
         dropout_ratio=0.,
         transformer_layers=None,
-        attention_type='divided_space',
+        # attention_type='decomposed_space_time',
+        # extra_kwargs=dict(temporal_cls_attn=False, in_proj=False, out_proj=False, mid_residual=False),
+        attention_type='divST_convT',
         norm_cfg=dict(type='LN', eps=1e-6)),
     cls_head=dict(type='TimeSformerHead', num_classes=174, in_channels=768),
     # model training and testing settings
@@ -112,7 +114,7 @@ optimizer = dict(
             '.backbone.time_embed': dict(decay_mult=0.0)
         }),
     weight_decay=1e-4,
-    nesterov=True)  # this lr is used for 8 gpus
+    nesterov=True)  # 0.005 for batch size 64
 optimizer_config = dict(grad_clip=dict(max_norm=40, norm_type=2))
 
 # learning policy

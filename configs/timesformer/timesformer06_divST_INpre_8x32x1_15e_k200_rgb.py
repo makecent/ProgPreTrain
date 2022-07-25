@@ -5,8 +5,9 @@ model = dict(
     type='Recognizer3D',
     backbone=dict(
         type='TimeSformer',
-        pretrained=None,
-        num_transformer_layers=7,
+        pretrained=  # noqa: E251
+        'https://download.openmmlab.com/mmaction/recognition/timesformer/vit_base_patch16_224.pth',  # noqa: E501
+        num_transformer_layers=6,
         num_frames=8,
         img_size=224,
         patch_size=16,
@@ -14,7 +15,7 @@ model = dict(
         in_channels=3,
         dropout_ratio=0.,
         transformer_layers=None,
-        attention_type='joint_space_time',
+        attention_type='divided_space_time',
         norm_cfg=dict(type='LN', eps=1e-6)),
     cls_head=dict(type='TimeSformerHead', num_classes=400, in_channels=768),
     # model training and testing settings
@@ -25,9 +26,9 @@ model = dict(
 dataset_type = 'VideoDataset'
 data_root = 'my_data/kinetics400/videos_train'
 data_root_val = 'my_data/kinetics400/videos_val'
-ann_file_train = 'my_data/kinetics400/kinetics400_train_list_videos.txt'
-ann_file_val = 'my_data/kinetics400/kinetics400_val_list_videos.txt'
-ann_file_test = 'my_data/kinetics400/kinetics400_val_list_videos.txt'
+ann_file_train = 'my_data/kinetics400/mini_kinetics200_train_list_videos.txt'
+ann_file_val = 'my_data/kinetics400/mini_kinetics200_val_list_videos.txt'
+ann_file_test = 'my_data/kinetics400/mini_kinetics200_val_list_videos.txt'
 
 img_norm_cfg = dict(
     mean=[127.5, 127.5, 127.5], std=[127.5, 127.5, 127.5], to_bgr=False)
@@ -36,9 +37,8 @@ train_pipeline = [
     dict(type='DecordInit'),
     dict(type='SampleFrames', clip_len=8, frame_interval=32, num_clips=1),
     dict(type='DecordDecode'),
-    dict(type='Resize', scale=(-1, 256)),
-    dict(type='RandomResizedCrop'),
-    dict(type='Resize', scale=(224, 224), keep_ratio=False),
+    dict(type='RandomRescale', scale_range=(256, 320)),
+    dict(type='RandomCrop', size=224),
     dict(type='Flip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
@@ -114,9 +114,11 @@ optimizer = dict(
     weight_decay=1e-4,
     nesterov=True)  # this lr is used for 8 gpus
 optimizer_config = dict(grad_clip=dict(max_norm=40, norm_type=2))
+
 # learning policy
 lr_config = dict(policy='step', step=[5, 10])
 total_epochs = 15
 
 # runtime settings
+log_config = dict(interval=500)
 checkpoint_config = dict(interval=1)

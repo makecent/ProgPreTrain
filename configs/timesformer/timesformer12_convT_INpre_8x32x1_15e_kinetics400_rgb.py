@@ -7,7 +7,7 @@ model = dict(
         type='TimeSformer',
         pretrained=  # noqa: E251
         'https://download.openmmlab.com/mmaction/recognition/timesformer/vit_base_patch16_224.pth',  # noqa: E501
-        num_transformer_layers=6,
+        num_transformer_layers=12,
         num_frames=8,
         img_size=224,
         patch_size=16,
@@ -17,28 +17,28 @@ model = dict(
         transformer_layers=None,
         attention_type='divST_convT',
         norm_cfg=dict(type='LN', eps=1e-6)),
-    cls_head=dict(type='TimeSformerHead', num_classes=174, in_channels=768),
+    cls_head=dict(type='TimeSformerHead', num_classes=400, in_channels=768),
     # model training and testing settings
     train_cfg=None,
     test_cfg=dict(average_clips='prob'))
 
 # dataset settings
-dataset_type = 'RawframeDataset'
-data_root = 'my_data/sthv2/rawframes'
-data_root_val = 'my_data/sthv2/rawframes'
-ann_file_train = 'my_data/sthv2/sthv2_train_list_rawframes.txt'
-ann_file_val = 'my_data/sthv2/sthv2_val_list_rawframes.txt'
-ann_file_test = 'my_data/sthv2/sthv2_val_list_rawframes.txt'
+dataset_type = 'VideoDataset'
+data_root = 'my_data/kinetics400/videos_train'
+data_root_val = 'my_data/kinetics400/videos_val'
+ann_file_train = 'my_data/kinetics400/kinetics400_train_list_videos.txt'
+ann_file_val = 'my_data/kinetics400/kinetics400_val_list_videos.txt'
+ann_file_test = 'my_data/kinetics400/kinetics400_val_list_videos.txt'
 
 img_norm_cfg = dict(
     mean=[127.5, 127.5, 127.5], std=[127.5, 127.5, 127.5], to_bgr=False)
 
 train_pipeline = [
-    dict(type='SampleFrames', clip_len=8, frame_interval=4, num_clips=1),
-    dict(type='RawFrameDecode'),
-    dict(type='Resize', scale=(-1, 256)),
-    dict(type='RandomResizedCrop'),
-    dict(type='Resize', scale=(224, 224), keep_ratio=False),
+    dict(type='DecordInit'),
+    dict(type='SampleFrames', clip_len=8, frame_interval=32, num_clips=1),
+    dict(type='DecordDecode'),
+    dict(type='RandomRescale', scale_range=(256, 320)),
+    dict(type='RandomCrop', size=224),
     dict(type='Flip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCTHW'),
@@ -46,13 +46,14 @@ train_pipeline = [
     dict(type='ToTensor', keys=['imgs', 'label'])
 ]
 val_pipeline = [
+    dict(type='DecordInit'),
     dict(
         type='SampleFrames',
         clip_len=8,
-        frame_interval=4,
+        frame_interval=32,
         num_clips=1,
         test_mode=True),
-    dict(type='RawFrameDecode'),
+    dict(type='DecordDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='CenterCrop', crop_size=224),
     dict(type='Normalize', **img_norm_cfg),
@@ -61,13 +62,14 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs', 'label'])
 ]
 test_pipeline = [
+    dict(type='DecordInit'),
     dict(
         type='SampleFrames',
         clip_len=8,
-        frame_interval=4,
+        frame_interval=32,
         num_clips=1,
         test_mode=True),
-    dict(type='RawFrameDecode'),
+    dict(type='DecordDecode'),
     dict(type='Resize', scale=(-1, 224)),
     dict(type='ThreeCrop', crop_size=224),
     dict(type='Normalize', **img_norm_cfg),
@@ -81,19 +83,16 @@ data = dict(
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=dataset_type,
-        start_index=0,
         ann_file=ann_file_train,
         data_prefix=data_root,
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        start_index=0,
         ann_file=ann_file_val,
         data_prefix=data_root_val,
         pipeline=val_pipeline),
     test=dict(
         type=dataset_type,
-        start_index=0,
         ann_file=ann_file_test,
         data_prefix=data_root_val,
         pipeline=test_pipeline))
