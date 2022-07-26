@@ -28,7 +28,7 @@ train_pipeline = [
 ]
 val_pipeline = [
     dict(type='DecordInit'),
-    dict(type='SampleFrames', clip_len=16, frame_interval=4, num_clips=1),
+    dict(type='SampleFrames', clip_len=16, frame_interval=4, num_clips=1, test_mode=True),
     dict(type='ProgLabel', num_stages=100),
     dict(type='DecordDecode'),
     dict(type='Resize', scale=(-1, 256)),
