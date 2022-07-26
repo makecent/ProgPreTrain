@@ -6,7 +6,7 @@ import copy
 
 
 @DATASETS.register_module()
-class CustomVideoDataset(VideoDataset):
+class VideoDatasetWithProg(VideoDataset):
     def evaluate(self, results, **kwargs):
         if 'MAE' in kwargs.get('metrics', []):
             cls_score, reg_mae = list(zip(*results))

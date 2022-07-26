@@ -38,7 +38,8 @@ optimizer = dict(
     momentum=0.9,
     weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=40, norm_type=2))
-
+evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy', 'MAE'])
 # learning policy
-lr_config = dict(policy='step', step=[40, 80])
-total_epochs = 100
+lr_config = dict(policy='step', step=[4, 8])
+total_epochs = 10
+load_from = "work_dirs/i3d_16x4_k400/epoch_85.pth"
