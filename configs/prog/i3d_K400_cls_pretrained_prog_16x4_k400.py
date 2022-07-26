@@ -33,12 +33,13 @@ data = dict(videos_per_gpu=16)
 # optimizer
 optimizer = dict(
     type='SGD',
-    lr=0.005,  # 0.01 for batch size 64
+    lr=5e-5,
     momentum=0.9,
     weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=40, norm_type=2))
-evaluation = dict(start=0, interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy', 'MAE'])
+evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy', 'MAE'])
 # learning policy
-lr_config = dict(policy='step', step=[4, 8])
+# lr_config = dict(policy='step', step=[4, 8])
+lr_config = dict(policy='Fixed')
 total_epochs = 10
 load_from = "work_dirs/i3d_16x4_k400/epoch_100.pth"
