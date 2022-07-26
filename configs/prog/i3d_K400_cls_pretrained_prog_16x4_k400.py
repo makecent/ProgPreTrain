@@ -38,7 +38,7 @@ optimizer = dict(
     momentum=0.9,
     weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=40, norm_type=2))
-evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy', 'MAE'])
+evaluation = dict(start=0, interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy', 'MAE'])
 # learning policy
 lr_config = dict(policy='step', step=[4, 8])
 total_epochs = 10
