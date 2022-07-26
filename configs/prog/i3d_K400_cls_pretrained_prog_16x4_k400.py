@@ -42,4 +42,4 @@ evaluation = dict(start=0, interval=1, metrics=['top_k_accuracy', 'mean_class_ac
 # learning policy
 lr_config = dict(policy='step', step=[4, 8])
 total_epochs = 10
-load_from = "work_dirs/i3d_16x4_k400/epoch_85.pth"
+load_from = "work_dirs/i3d_16x4_k400/epoch_100.pth"
