@@ -40,7 +40,7 @@ val_pipeline = [
 ]
 test_pipeline = [
     dict(type='DecordInit'),
-    dict(type='SampleFrames', clip_len=16, frame_interval=4, num_clips=10, test_mode=True),
+    dict(type='SampleFrames', clip_len=16, frame_interval=4, num_clips=10),
     dict(type='DecordDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='ThreeCrop', crop_size=256),

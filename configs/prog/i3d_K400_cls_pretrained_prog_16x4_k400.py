@@ -39,10 +39,10 @@ optimizer = dict(
 optimizer_config = dict(grad_clip=dict(max_norm=40, norm_type=2))
 evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy', 'MAE'])
 # learning policy
-lr_config = dict(policy='step', step=[10, 16],
+lr_config = dict(policy='step', step=[4, 8],
                  warmup='linear',
                  warmup_ratio=0.1,
-                 warmup_iters=2,
-                 warmup_by_epoch=False)
-total_epochs = 20
+                 warmup_iters=1,
+                 warmup_by_epoch=True)
+total_epochs = 10
 load_from = "work_dirs/i3d_16x4_k400/epoch_100.pth"
